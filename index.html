@@ -1,0 +1,992 @@
+<script type="text/javascript">
+        var gk_isXlsx = false;
+        var gk_xlsxFileLookup = {};
+        var gk_fileData = {};
+        function filledCell(cell) {
+          return cell !== '' && cell != null;
+        }
+        function loadFileData(filename) {
+        if (gk_isXlsx && gk_xlsxFileLookup[filename]) {
+            try {
+                var workbook = XLSX.read(gk_fileData[filename], { type: 'base64' });
+                var firstSheetName = workbook.SheetNames[0];
+                var worksheet = workbook.Sheets[firstSheetName];
+
+                // Convert sheet to JSON to filter blank rows
+                var jsonData = XLSX.utils.sheet_to_json(worksheet, { header: 1, blankrows: false, defval: '' });
+                // Filter out blank rows (rows where all cells are empty, null, or undefined)
+                var filteredData = jsonData.filter(row => row.some(filledCell));
+
+                // Heuristic to find the header row by ignoring rows with fewer filled cells than the next row
+                var headerRowIndex = filteredData.findIndex((row, index) =>
+                  row.filter(filledCell).length >= filteredData[index + 1]?.filter(filledCell).length
+                );
+                // Fallback
+                if (headerRowIndex === -1 || headerRowIndex > 25) {
+                  headerRowIndex = 0;
+                }
+
+                // Convert filtered JSON back to CSV
+                var csv = XLSX.utils.aoa_to_sheet(filteredData.slice(headerRowIndex)); // Create a new sheet from filtered array of arrays
+                csv = XLSX.utils.sheet_to_csv(csv, { header: 1 });
+                return csv;
+            } catch (e) {
+                console.error(e);
+                return "";
+            }
+        }
+        return gk_fileData[filename] || "";
+        }
+        </script><!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Бета-версия ГИД - Планирование льгот</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary: #2196F3;
+            --success: #4caf50;
+            --danger: #f44336;
+            --warning: #ff9800;
+            --bg: #f5f7fa;
+            --card: #ffffff;
+            --text: #1a1a1a;
+            --text-light: #606770;
+            --border: #e0e0e0;
+            --shadow: 0 1px 3px rgba(0,0,0,0.05);
+            --disabled: #cccccc;
+            --text-disabled: #999999;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            padding: 16px;
+            line-height: 1.5;
+        }
+
+        .header {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 24px;
+            padding-bottom: 16px;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .avatar {
+            width: 56px;
+            height: 56px;
+            background: #d9f0d9;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            font-size: 20px;
+            color: #2e7d32;
+        }
+
+        .profile-info h1 {
+            font-size: 18px;
+            font-weight: 600;
+        }
+
+        .profile-info .level {
+            font-size: 13px;
+            color: var(--text-light);
+        }
+
+        .section {
+            background: var(--card);
+            border-radius: 16px;
+            padding: 20px;
+            box-shadow: var(--shadow);
+            margin-bottom: 20px;
+        }
+
+        h2 {
+            font-size: 18px;
+            font-weight: 600;
+            margin-bottom: 16px;
+        }
+
+        h3 {
+            font-size: 16px;
+            font-weight: 600;
+            margin: 20px 0 12px;
+        }
+
+        /* === СОБЫТИЯ === */
+        .event-item {
+            margin-bottom: 16px;
+            padding: 12px;
+            background: #f8f9fa;
+            border-radius: 12px;
+            border: 1px solid var(--border);
+        }
+
+        .event-header {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-weight: 500;
+            font-size: 14px;
+        }
+
+        .event-details {
+            display: none;
+            margin-top: 12px;
+            gap: 12px;
+        }
+
+        .event-details.active {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .event-details input[type="date"],
+        .event-details select {
+            padding: 10px;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            font-size: 14px;
+        }
+
+        .event-family-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+        }
+
+        .confirm-btn {
+            background: var(--primary);
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            width: 100%;
+            margin-top: 12px;
+        }
+
+        .confirm-btn:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+        }
+
+        .confirmed {
+            background: #e8f5e8 !important;
+            border-color: var(--success);
+        }
+
+        .confirmed .confirm-btn {
+            background: var(--success);
+        }
+
+        /* === ОТПУСК === */
+        .vacation-card {
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 16px;
+            margin-bottom: 12px;
+            background: #fafafa;
+        }
+
+        .vacation-header {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 12px;
+        }
+
+        .vacation-dates {
+            font-weight: 600;
+            font-size: 15px;
+        }
+
+        .vacation-controls {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+            margin-bottom: 12px;
+        }
+
+        .vacation-controls input[type="number"],
+        .vacation-controls input[type="date"] {
+            padding: 10px;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            font-size: 14px;
+        }
+
+        .vacation-controls label {
+            font-size: 13px;
+            color: var(--text-light);
+            margin-bottom: 4px;
+            display: block;
+        }
+
+        .checkbox-group {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 13px;
+            color: var(--text-light);
+            margin-top: 8px;
+        }
+
+        .total-vacation {
+            margin-top: 16px;
+            padding: 12px;
+            background: #e3f2fd;
+            border-radius: 8px;
+            text-align: center;
+            font-weight: 600;
+            color: var(--primary);
+        }
+
+        /* === САМОСТОЯТЕЛЬНАЯ ПУТЁВКА === */
+        .trip-card {
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 16px;
+            margin-bottom: 12px;
+            background: #f8f9fa;
+        }
+
+        .trip-inputs {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+            margin-bottom: 12px;
+        }
+
+        .trip-inputs input[type="date"],
+        .trip-inputs select,
+        .trip-inputs input[type="number"] {
+            padding: 10px;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            font-size: 14px;
+        }
+
+        .trip-inputs label,
+        .trip-family label {
+            font-size: 13px;
+            color: var(--text-light);
+            margin-bottom: 4px;
+            display: block;
+        }
+
+        .trip-days {
+            font-size: 13px;
+            color: var(--text-light);
+            margin-bottom: 8px;
+        }
+
+        .trip-family {
+            margin-bottom: 12px;
+        }
+
+        .trip-family input {
+            width: 80px;
+            padding: 8px;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+        }
+
+        /* === ТАБЛИЦА ЗАТРАТ === */
+        .table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 12px;
+            font-size: 13px;
+            overflow-x: auto;
+            display: block;
+            white-space: nowrap;
+        }
+
+        .table th, .table td {
+            border: 1px solid var(--border);
+            padding: 8px;
+            text-align: center;
+            min-width: 50px;
+        }
+
+        .table th {
+            background: #f5f5f5;
+            font-weight: 600;
+            font-size: 12px;
+        }
+
+        .table input[type="number"] {
+            width: 60px;
+            padding: 6px;
+            border: none;
+            text-align: center;
+            font-size: 13px;
+        }
+
+        .quarterSum, .totalSum {
+            font-weight: 600;
+            background: #f0f0f0;
+        }
+
+        /* === ЛАГЕРЬ === */
+        .camp-section {
+            margin-top: 20px;
+        }
+
+        .camp-controls {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .camp-item {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .camp-item label {
+            font-size: 14px;
+            font-weight: 500;
+        }
+
+        .camp-item select {
+            padding: 10px;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            font-size: 14px;
+        }
+
+        .add-btn {
+            background: var(--primary);
+            color: white;
+            border: none;
+            padding: 10px;
+            border-radius: 8px;
+            font-weight: 500;
+        }
+
+        .enrollment-list {
+            margin-top: 16px;
+        }
+
+        .enrollment-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px;
+            background: #f8f9fa;
+            border-radius: 8px;
+            margin-bottom: 8px;
+            font-size: 14px;
+        }
+
+        .enrollment-item button {
+            background: var(--warning);
+            color: white;
+            border: none;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 12px;
+        }
+
+        /* Подтверждённое состояние */
+        .camp-confirmed .camp-controls,
+        .camp-confirmed .add-btn,
+        .camp-confirmed .confirm-btn,
+        .camp-confirmed #campStatus {
+            display: none;
+        }
+
+        .camp-confirmed .enrollment-list::before {
+            content: "Ваши записи:";
+            font-weight: 600;
+            font-size: 15px;
+            color: var(--text);
+            display: block;
+            margin-bottom: 12px;
+        }
+
+        .camp-confirmed .enrollment-item {
+            background: #f0f0f0;
+            color: var(--text-disabled);
+            opacity: 0.7;
+        }
+
+        .camp-confirmed .enrollment-item button {
+            display: none;
+        }
+
+        .notification {
+            background: #e3f2fd;
+            border-radius: 12px;
+            padding: 14px;
+            margin: 16px 0;
+            font-size: 13px;
+            color: #1565c0;
+            line-height: 1.5;
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            background: rgba(0,0,0,0.5);
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+        }
+
+        .modal-content {
+            background: white;
+            padding: 24px;
+            border-radius: 16px;
+            max-width: 90%;
+            text-align: center;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.15);
+        }
+
+        .modal-content h3 {
+            margin-bottom: 16px;
+            color: var(--success);
+        }
+
+        .modal-content .confirmation-text {
+            text-align: left;
+            font-size: 14px;
+            line-height: 1.5;
+            margin: 16px 0;
+        }
+
+        .modal-content .confirmation-text hr {
+            margin: 12px 0;
+            border: 0;
+            border-top: 1px solid #eee;
+        }
+
+        .modal-close {
+            background: var(--danger);
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 8px;
+            font-weight: 500;
+            margin-top: 12px;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="header">
+        <div class="avatar">MA</div>
+        <div class="profile-info">
+            <h1>Максим Андреев</h1>
+            <div class="level">Уровень 1</div>
+        </div>
+    </div>
+
+    <div class="section">
+        <h2>Планирование льгот</h2>
+
+        <!-- === СОБЫТИЯ === -->
+        <h3>Жизненные события</h3>
+
+        <div class="event-item" id="familyEvent">
+            <div class="event-header">
+                <input type="checkbox" id="family" onchange="toggleEvent('family')">
+                <label for="family">Ожидается пополнение в семье</label>
+            </div>
+            <div class="event-details" id="familyDetails">
+                <div class="event-family-row">
+                    <input type="date" id="familyDate" min="2026-01-01" max="2026-12-31">
+                    <select id="familyChild">
+                        <option value="">-- Выберите --</option>
+                        <option value="1-2">первый или второй ребенок</option>
+                        <option value="3+">третий и последующий ребенок</option>
+                    </select>
+                </div>
+                <button class="confirm-btn" id="confirmFamilyBtn" onclick="confirmEvent('family')" disabled>Подтвердить</button>
+            </div>
+        </div>
+
+        <div class="event-item" id="marriageEvent">
+            <div class="event-header">
+                <input type="checkbox" id="marriage" onchange="toggleEvent('marriage')">
+                <label for="marriage">Впервые вступление в брак</label>
+            </div>
+            <div class="event-details" id="marriageDetails">
+                <input type="date" id="marriageDate" min="2026-01-01" max="2026-12-31" style="width: 100%;">
+                <button class="confirm-btn" id="confirmMarriageBtn" onclick="confirmEvent('marriage')" disabled>Подтвердить</button>
+            </div>
+        </div>
+
+        <!-- === ОТПУСК === -->
+        <h3>Заявка на компенсацию стоимости проезда к месту отпуска и обратно</h3>
+
+        <div class="vacation-card" id="vacation1">
+            <div class="vacation-header">
+                <input type="checkbox" id="vacation1-check" onchange="toggleVacation(1)">
+                <div class="vacation-dates" data-start="2026-05-05" data-end="2026-05-20">05.05.2026 – 20.05.2026</div>
+            </div>
+            <div class="vacation-controls" id="controls1" style="display: none;">
+                <div>
+                    <label>Сумма расходов</label>
+                    <input type="number" id="amount1" placeholder="₽" min="0" oninput="updateTotal()">
+                </div>
+                <div>
+                    <label>Планируемая дата сдачи авансового отчёта</label>
+                    <input type="date" id="reportDate1" min="2026-01-01" max="2026-12-31">
+                </div>
+            </div>
+            <div class="checkbox-group" id="dependentGroup1" style="display: none;">
+                <input type="checkbox" id="dependent1">
+                <label for="dependent1">За иждивенца</label>
+            </div>
+            <button class="confirm-btn" id="confirmBtn1" onclick="confirmVacation(1)" disabled>Подтвердить</button>
+        </div>
+
+        <div class="vacation-card" id="vacation2">
+            <div class="vacation-header">
+                <input type="checkbox" id="vacation2-check" onchange="toggleVacation(2)">
+                <div class="vacation-dates" data-start="2026-11-11" data-end="2026-12-12">11.11.2026 – 12.12.2026</div>
+            </div>
+            <div class="vacation-controls" id="controls2" style="display: none;">
+                <div>
+                    <label>Сумма расходов</label>
+                    <input type="number" id="amount2" placeholder="₽" min="0" oninput="updateTotal()">
+                </div>
+                <div>
+                    <label>Планируемая дата сдачи авансового отчёта</label>
+                    <input type="date" id="reportDate2" min="2026-01-01" max="2026-12-31">
+                </div>
+            </div>
+            <div class="checkbox-group" id="dependentGroup2" style="display: none;">
+                <input type="checkbox" id="dependent2">
+                <label for="dependent2">За иждивенца</label>
+            </div>
+            <button class="confirm-btn" id="confirmBtn2" onclick="confirmVacation(2)" disabled>Подтвердить</button>
+        </div>
+
+        <div class="notification">
+            <strong>Важно:</strong> Заявку можно подать до <strong>31.12.2026</strong>. После подтверждения — редактировать нельзя.
+        </div>
+
+        <!-- === САМОСТОЯТЕЛЬНАЯ ПУТЁВКА === -->
+        <h3>Компенсация самостоятельно приобретённой путёвки</h3>
+
+        <div class="trip-card">
+            <div class="trip-inputs">
+                <div>
+                    <label>Дата заезда</label>
+                    <input type="date" id="checkIn" min="2026-01-01" max="2026-12-31" onchange="updateCheckOutMin(); calcTrip()">
+                </div>
+                <div>
+                    <label>Дата выезда</label>
+                    <input type="date" id="checkOut" min="2026-01-01" max="2026-12-31" onchange="calcTrip()">
+                </div>
+            </div>
+            <div class="trip-days" id="tripDays">Дней: 0</div>
+            <select id="resort" onchange="calcTrip()" style="width: 100%; margin-bottom: 8px;">
+                <option value="">-- Выберите объект отдыха --</option>
+                <option value="Гранд отель Поляна">Гранд отель Поляна</option>
+                <option value="Поляна 1389">Поляна 1389</option>
+                <option value="Базовый санаторий «им. Ломоносова»">Базовый санаторий «им. Ломоносова»</option>
+                <option value="Лечебно-оздоровительный комплекс «Витязь»">Лечебно-оздоровительный комплекс «Витязь»</option>
+                <option value="Санаторий «Орен-Крым»">Санаторий «Орен-Крым»</option>
+            </select>
+            <div class="trip-family">
+                <label>Количество членов семьи</label>
+                <input type="number" id="familyCount" min="1" value="1">
+            </div>
+            <input type="text" id="tripAmount" placeholder="Сумма, ₽" readonly style="background: #f0f0f0; margin-bottom: 12px;">
+            <button class="confirm-btn" id="confirmTripBtn" onclick="confirmTrip()" disabled>Подтвердить путёвку</button>
+        </div>
+
+        <div class="notification">
+            <strong>Важно:</strong> Одна путёвка на год. После подтверждения — редактировать нельзя.
+        </div>
+
+        <!-- === КОМПЕНСАЦИЯ ЗАТРАТ === -->
+        <h3>Компенсация затрат</h3>
+        <label>Количество детей: </label>
+        <select id="numChildren" onchange="updateChildRows()" style="width: 100%; padding: 10px; border-radius: 8px; margin-top: 8px;">
+            <option value="0">0</option>
+            <option value="1">1</option>
+            <option value="2">2</option>
+            <option value="3">3</option>
+            <option value="4">4</option>
+        </select>
+        <div style="overflow-x: auto; margin-top: 12px;">
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th>Категория</th>
+                        <th>Янв</th><th>Фев</th><th>Мар</th><th>I кв</th>
+                        <th>Апр</th><th>Май</th><th>Июн</th><th>II кв</th>
+                        <th>Июл</th><th>Авг</th><th>Сен</th><th>III кв</th>
+                        <th>Окт</th><th>Ноя</th><th>Дек</th><th>IV кв</th>
+                        <th>Итого</th><th>Остаток</th>
+                    </tr>
+                </thead>
+                <tbody id="tableBody"></tbody>
+            </table>
+        </div>
+
+        <!-- === ЛАГЕРЬ === -->
+        <h3>Запись на детский лагерь</h3>
+        <div class="notification">
+            В 2026 году: <strong>I смена: 01.06 – 23.06</strong>, <strong>II смена: 27.07 – 16.08</strong>. Укажите до 03.03.2026.
+        </div>
+
+        <div class="camp-section" id="campSection">
+            <div class="camp-controls">
+                <div class="camp-item">
+                    <label>Ребёнок</label>
+                    <select id="childSelect">
+                        <option value="">-- Выберите --</option>
+                        <option value="child1">Андреева Ева Максимовна (19.12.2007)</option>
+                        <option value="child2">Андреев Адам Максимович (19.12.2007)</option>
+                    </select>
+                </div>
+                <div class="camp-item">
+                    <label>Смена</label>
+                    <select id="shiftSelect">
+                        <option value="">-- Выберите --</option>
+                        <option value="shift1">I смена (01.06 – 23.06)</option>
+                        <option value="shift2">II смена (27.07 – 16.08)</option>
+                    </select>
+                </div>
+                <button class="add-btn" onclick="addEnrollment()">+ Добавить</button>
+                <div style="display: flex; gap: 8px; margin-top: 12px;">
+                    <button class="confirm-btn" onclick="confirmAllEnrollments()" style="flex: 1; background: var(--primary);">Подтвердить все</button>
+                    <button class="confirm-btn" onclick="cancelAllEnrollments()" style="flex: 1; background: var(--danger);">Отменить</button>
+                </div>
+            </div>
+            <div id="campStatus" style="margin-top: 8px; font-size: 13px; color: var(--text-light);"></div>
+            <div id="enrollmentList" class="enrollment-list"></div>
+        </div>
+    </div>
+
+    <!-- Модальное окно -->
+    <div id="confirmationModal" class="modal">
+        <div class="modal-content">
+            <h3>Заявка отправлена!</h3>
+            <div id="confirmationContent" class="confirmation-text"></div>
+            <button class="modal-close" onclick="closeModal()">Закрыть</button>
+        </div>
+    </div>
+
+    <script>
+        // === ФОРМАТИРОВАНИЕ ДАТЫ ДД.ММ.ГГГГ ===
+        function formatDate(dateStr) {
+            if (!dateStr) return '';
+            const [y, m, d] = dateStr.split('-');
+            return `${d}.${m}.${y}`;
+        }
+
+        // === СОБЫТИЯ ===
+        function toggleEvent(id) {
+            const checked = document.getElementById(id).checked;
+            const details = document.getElementById(id + 'Details');
+            details.classList.toggle('active', checked);
+            updateEventButton(id);
+        }
+
+        function updateEventButton(id) {
+            let valid = false;
+            if (id === 'family') {
+                const date = document.getElementById('familyDate').value;
+                const child = document.getElementById('familyChild').value;
+                valid = date && child;
+            } else if (id === 'marriage') {
+                const date = document.getElementById('marriageDate').value;
+                valid = date;
+            }
+            document.getElementById(`confirm${id.charAt(0).toUpperCase() + id.slice(1)}Btn`).disabled = !valid;
+        }
+
+        function confirmEvent(id) {
+            const event = document.getElementById(id + 'Event');
+            event.classList.add('confirmed');
+            event.querySelectorAll('input, select, button').forEach(el => el.disabled = true);
+            document.getElementById(`confirm${id.charAt(0).toUpperCase() + id.slice(1)}Btn`).textContent = 'Подтверждено';
+
+            let text = '';
+            if (id === 'family') {
+                const childText = document.getElementById('familyChild').selectedOptions[0].text;
+                text = `Пополнение в семье: <strong>${formatDate(document.getElementById('familyDate').value)}</strong> — ${childText}`;
+            } else {
+                text = `Вступление в брак: <strong>${formatDate(document.getElementById('marriageDate').value)}</strong>`;
+            }
+
+            showModal(text);
+        }
+
+        // === ОТПУСК ===
+        function toggleVacation(num) {
+            const check = document.getElementById(`vacation${num}-check`).checked;
+            document.getElementById(`controls${num}`).style.display = check ? 'grid' : 'none';
+            document.getElementById(`dependentGroup${num}`).style.display = check ? 'flex' : 'none';
+            updateConfirmButton(num);
+            updateTotal();
+        }
+
+        function updateConfirmButton(num) {
+            const amount = document.getElementById(`amount${num}`).value;
+            const date = document.getElementById(`reportDate${num}`).value;
+            const btn = document.getElementById(`confirmBtn${num}`);
+            btn.disabled = !(amount && date);
+        }
+
+        function confirmVacation(num) {
+            const card = document.getElementById(`vacation${num}`);
+            card.classList.add('confirmed');
+            card.querySelectorAll('input, button').forEach(el => el.disabled = true);
+            document.getElementById(`confirmBtn${num}`).textContent = 'Подтверждено';
+
+            const datesEl = card.querySelector('.vacation-dates');
+            const start = datesEl.dataset.start;
+            const end = datesEl.dataset.end;
+            const amount = document.getElementById(`amount${num}`).value;
+
+            const text = `Компенсация отпуска:<br><strong>${formatDate(start)}</strong> – <strong>${formatDate(end)}</strong><br>${amount} ₽`;
+            showModal(text);
+            updateTotal();
+        }
+
+        function updateTotal() {
+            let total = 0;
+            for (let i = 1; i <= 2; i++) {
+                const check = document.getElementById(`vacation${i}-check`);
+                if (check && check.checked && !check.disabled) {
+                    total += parseFloat(document.getElementById(`amount${i}`).value) || 0;
+                }
+            }
+            document.getElementById('totalAmount').textContent = total.toLocaleString('ru') + ' ₽';
+        }
+
+        // === ПУТЁВКА ===
+        function updateCheckOutMin() {
+            const checkIn = document.getElementById('checkIn').value;
+            const checkOut = document.getElementById('checkOut');
+            if (checkIn) {
+                checkOut.min = checkIn;
+                if (checkOut.value && checkOut.value < checkIn) {
+                    checkOut.value = checkIn;
+                }
+            } else {
+                checkOut.min = '2026-01-01';
+            }
+        }
+
+        function calcTrip() {
+            const checkIn = document.getElementById('checkIn').value;
+            const checkOut = document.getElementById('checkOut').value;
+            const resort = document.getElementById('resort').value;
+
+            if (checkIn && checkOut && resort && checkOut >= checkIn) {
+                const inDate = new Date(checkIn);
+                const outDate = new Date(checkOut);
+                const days = Math.ceil((outDate - inDate) / (1000 * 60 * 60 * 24)) + 1;
+                const month = inDate.getMonth() + 1;
+                const isSummer = [6, 7, 8].includes(month);
+                const amount = isSummer ? 155220 : 170720;
+
+                document.getElementById('tripDays').textContent = `Дней: ${days}`;
+                document.getElementById('tripAmount').value = amount.toLocaleString('ru') + ' ₽';
+                document.getElementById('confirmTripBtn').disabled = false;
+            } else {
+                document.getElementById('tripDays').textContent = 'Дней: 0';
+                document.getElementById('tripAmount').value = '';
+                document.getElementById('confirmTripBtn').disabled = true;
+            }
+        }
+
+        function confirmTrip() {
+            const card = document.querySelector('.trip-card');
+            card.classList.add('confirmed');
+            card.querySelectorAll('input, select, button').forEach(el => el.disabled = true);
+            document.getElementById('confirmTripBtn').textContent = 'Подтверждено';
+
+            const text = `${document.getElementById('resort').value}<br><strong>${formatDate(document.getElementById('checkIn').value)}</strong> – <strong>${formatDate(document.getElementById('checkOut').value)}</strong><br>${document.getElementById('familyCount').value} чел. · ${document.getElementById('tripAmount').value}`;
+            showModal(text);
+        }
+
+        // === МОДАЛЬНОЕ ОКНО ===
+        function showModal(content) {
+            document.getElementById('confirmationContent').innerHTML = content;
+            document.getElementById('confirmationModal').style.display = 'flex';
+        }
+
+        function closeModal() {
+            document.getElementById('confirmationModal').style.display = 'none';
+        }
+
+        // === ТАБЛИЦА ЗАТРАТ ===
+        const limits = { education: 31044, kindergarten: 93132, sport: 31044 };
+        let rowLimits = {};
+
+        function updateChildRows() {
+            const num = parseInt(document.getElementById('numChildren').value);
+            const tbody = document.getElementById('tableBody');
+            rowLimits = {};
+            tbody.innerHTML = '';
+
+            for (let i = 1; i <= num; i++) {
+                addRow(`Доп. образование (Ребенок ${i})`, `education${i}`, limits.education);
+                addRow(`Детские садики (Ребенок ${i})`, `kindergarten${i}`, limits.kindergarten);
+            }
+            addRow('Спортивные занятия', 'sport', limits.sport);
+        }
+
+        function formatNumber(num) {
+            return num.toLocaleString('ru-RU', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+        }
+
+        function addRow(category, rowId, limit) {
+            rowLimits[rowId] = limit;
+            const tbody = document.getElementById('tableBody');
+            const row = document.createElement('tr');
+            row.innerHTML = `<td>${category}</td>`;
+
+            for (let m = 1; m <= 12; m++) {
+                row.innerHTML += `<td><input type="number" min="0" class="monthInput" data-row="${rowId}" data-month="${m}"></td>`;
+                if (m % 3 === 0) {
+                    const q = m / 3;
+                    row.innerHTML += `<td id="q${q}_${rowId}" class="quarterSum">0,00</td>`;
+                }
+            }
+
+            row.innerHTML += `<td id="total_${rowId}" class="totalSum">0,00</td>`;
+            row.innerHTML += `<td id="remaining_${rowId}" class="remaining">${formatNumber(limit)}</td>`;
+            tbody.appendChild(row);
+        }
+
+        document.addEventListener('input', (e) => {
+            if (e.target.classList.contains('monthInput')) {
+                const rowId = e.target.dataset.row;
+                const months = Array(13).fill(0);
+                let total = 0;
+
+                document.querySelectorAll(`input[data-row="${rowId}"]`).forEach(input => {
+                    const m = parseInt(input.dataset.month);
+                    const v = parseFloat(input.value) || 0;
+                    months[m] = v;
+                    total += v;
+                });
+
+                for (let q = 1; q <= 4; q++) {
+                    const sum = months.slice((q-1)*3 + 1, q*3 + 1).reduce((a,b) => a+b, 0);
+                    const el = document.getElementById(`q${q}_${rowId}`);
+                    if (el) el.textContent = formatNumber(sum);
+                }
+
+                document.getElementById(`total_${rowId}`).textContent = formatNumber(total);
+                const remaining = rowLimits[rowId] - total;
+                document.getElementById(`remaining_${rowId}`).textContent = remaining > 0 ? formatNumber(remaining) : '0,00';
+            }
+        });
+
+        // === ЛАГЕРЬ ===
+        let enrollments = [];
+        let confirmedEnrollments = [];
+
+        function addEnrollment() {
+            const child = document.getElementById('childSelect').value;
+            const shift = document.getElementById('shiftSelect').value;
+            if (!child || !shift) return alert('Выберите ребёнка и смену');
+            if (enrollments.some(e => e.child === child)) return alert('Ребёнок уже записан');
+            const childName = document.getElementById('childSelect').selectedOptions[0].text;
+            const shiftName = document.getElementById('shiftSelect').selectedOptions[0].text;
+            enrollments.push({ child, childName, shift, shiftName });
+            updateEnrollmentList();
+            document.getElementById('childSelect').value = '';
+            document.getElementById('shiftSelect').value = '';
+        }
+
+        function updateEnrollmentList() {
+            const list = document.getElementById('enrollmentList');
+            list.innerHTML = '';
+            enrollments.forEach((e, i) => {
+                const div = document.createElement('div');
+                div.className = 'enrollment-item';
+                div.innerHTML = `<div>${e.childName} — ${e.shiftName}</div><button onclick="removeEnrollment(${i})">Удалить</button>`;
+                list.appendChild(div);
+            });
+            document.getElementById('campStatus').textContent = `Запланировано: ${enrollments.length}`;
+        }
+
+        function removeEnrollment(i) {
+            enrollments.splice(i, 1);
+            updateEnrollmentList();
+        }
+
+        function confirmAllEnrollments() {
+            if (!enrollments.length) return alert('Нет записей');
+            if (confirm(`Подтвердить ${enrollments.length} записей?`)) {
+                confirmedEnrollments = [...enrollments];
+                enrollments = [];
+
+                const text = confirmedEnrollments.map(e => 
+                    `Лагерь: ${e.childName}<br><strong>${e.shiftName}</strong>`
+                ).join('<hr>');
+
+                showModal(text);
+
+                document.getElementById('campSection').classList.add('camp-confirmed');
+
+                const enrollmentList = document.getElementById('enrollmentList');
+                enrollmentList.innerHTML = '';
+                confirmedEnrollments.forEach(e => {
+                    const div = document.createElement('div');
+                    div.className = 'enrollment-item';
+                    div.innerHTML = `<div>${e.childName} — ${e.shiftName}</div>`;
+                    enrollmentList.appendChild(div);
+                });
+            }
+        }
+
+        function cancelAllEnrollments() {
+            if (!enrollments.length) return alert('Нет записей');
+            if (confirm('Отменить все записи?')) {
+                enrollments = [];
+                updateEnrollmentList();
+            }
+        }
+
+        // === ИНИЦИАЛИЗАЦИЯ ===
+        window.onload = () => {
+            updateChildRows();
+
+            ['amount1','amount2','reportDate1','reportDate2'].forEach(id => {
+                document.getElementById(id).addEventListener('input', () => {
+                    const num = id.slice(-1);
+                    updateConfirmButton(num);
+                    updateTotal();
+                });
+            });
+
+            document.getElementById('familyDate').addEventListener('input', () => updateEventButton('family'));
+            document.getElementById('familyChild').addEventListener('change', () => updateEventButton('family'));
+            document.getElementById('marriageDate').addEventListener('input', () => updateEventButton('marriage'));
+        };
+    </script>
+</body>
+</html>
