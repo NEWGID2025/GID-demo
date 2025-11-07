@@ -1,43 +1,4 @@
-<script type="text/javascript">
-        var gk_isXlsx = false;
-        var gk_xlsxFileLookup = {};
-        var gk_fileData = {};
-        function filledCell(cell) {
-          return cell !== '' && cell != null;
-        }
-        function loadFileData(filename) {
-        if (gk_isXlsx && gk_xlsxFileLookup[filename]) {
-            try {
-                var workbook = XLSX.read(gk_fileData[filename], { type: 'base64' });
-                var firstSheetName = workbook.SheetNames[0];
-                var worksheet = workbook.Sheets[firstSheetName];
-
-                // Convert sheet to JSON to filter blank rows
-                var jsonData = XLSX.utils.sheet_to_json(worksheet, { header: 1, blankrows: false, defval: '' });
-                // Filter out blank rows (rows where all cells are empty, null, or undefined)
-                var filteredData = jsonData.filter(row => row.some(filledCell));
-
-                // Heuristic to find the header row by ignoring rows with fewer filled cells than the next row
-                var headerRowIndex = filteredData.findIndex((row, index) =>
-                  row.filter(filledCell).length >= filteredData[index + 1]?.filter(filledCell).length
-                );
-                // Fallback
-                if (headerRowIndex === -1 || headerRowIndex > 25) {
-                  headerRowIndex = 0;
-                }
-
-                // Convert filtered JSON back to CSV
-                var csv = XLSX.utils.aoa_to_sheet(filteredData.slice(headerRowIndex)); // Create a new sheet from filtered array of arrays
-                csv = XLSX.utils.sheet_to_csv(csv, { header: 1 });
-                return csv;
-            } catch (e) {
-                console.error(e);
-                return "";
-            }
-        }
-        return gk_fileData[filename] || "";
-        }
-        </script><!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
@@ -124,6 +85,35 @@
             font-size: 16px;
             font-weight: 600;
             margin: 20px 0 12px;
+        }
+
+        /* === ПЕНСИЯ === */
+        .pension-block {
+            background: #fff8e1;
+            border: 1px solid #ffcc80;
+            border-radius: 12px;
+            padding: 16px;
+            margin-bottom: 20px;
+            font-size: 14px;
+            line-height: 1.5;
+        }
+
+        .pension-block strong {
+            color: #e65100;
+        }
+
+        .pension-date {
+            margin-top: 12px;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .pension-date input[type="date"] {
+            padding: 10px;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            font-size: 14px;
         }
 
         /* === СОБЫТИЯ === */
@@ -257,7 +247,7 @@
             color: var(--primary);
         }
 
-        /* === САМОСТОЯТЕЛЬНАЯ ПУТЁВКА === */
+        /* === ПУТЁВКА === */
         .trip-card {
             border: 1px solid var(--border);
             border-radius: 12px;
@@ -406,7 +396,6 @@
             font-size: 12px;
         }
 
-        /* Подтверждённое состояние */
         .camp-confirmed .camp-controls,
         .camp-confirmed .add-btn,
         .camp-confirmed .confirm-btn,
@@ -490,6 +479,12 @@
             font-weight: 500;
             margin-top: 12px;
         }
+
+        @media (max-width: 480px) {
+            .event-family-row, .vacation-controls, .trip-inputs { grid-template-columns: 1fr; }
+            .table th, .table td { padding: 6px; min-width: 40px; }
+            .table input[type="number"] { width: 50px; font-size: 12px; }
+        }
     </style>
 </head>
 <body>
@@ -505,9 +500,22 @@
     <div class="section">
         <h2>Планирование льгот</h2>
 
-        <!-- === СОБЫТИЯ === -->
-        <h3>Жизненные события</h3>
+        <!-- БЛОК ПРО ПЕНСИЮ -->
+        <div class="pension-block" id="pensionBlock">
+            <p>
+                <strong>Внимание!</strong><br>
+                Вы предоставили в отдел кадров и трудовых отношений сведения о назначении страховой пенсии.<br>
+                Пожалуйста, заполните <strong>планируемую дату увольнения на пенсию</strong> в целях формирования оценочных обязательств.
+            </p>
+            <div class="pension-date">
+                <label>Планируемая дата увольнения:</label>
+                <input type="date" id="retirementDate" min="2026-01-01" max="2030-12-31">
+            </div>
+            <button class="confirm-btn" id="confirmRetirementBtn" onclick="confirmRetirement()" disabled>Подтвердить дату</button>
+        </div>
 
+        <!-- ЖИЗНЕННЫЕ СОБЫТИЯ -->
+        <h3>Жизненные события</h3>
         <div class="event-item" id="familyEvent">
             <div class="event-header">
                 <input type="checkbox" id="family" onchange="toggleEvent('family')">
@@ -537,9 +545,8 @@
             </div>
         </div>
 
-        <!-- === ОТПУСК === -->
+        <!-- ОТПУСК -->
         <h3>Заявка на компенсацию стоимости проезда к месту отпуска и обратно</h3>
-
         <div class="vacation-card" id="vacation1">
             <div class="vacation-header">
                 <input type="checkbox" id="vacation1-check" onchange="toggleVacation(1)">
@@ -548,7 +555,7 @@
             <div class="vacation-controls" id="controls1" style="display: none;">
                 <div>
                     <label>Сумма расходов</label>
-                    <input type="number" id="amount1" placeholder="₽" min="0" oninput="updateTotal()">
+                    <input type="number" id="amount1" placeholder="₽" min="0">
                 </div>
                 <div>
                     <label>Планируемая дата сдачи авансового отчёта</label>
@@ -570,7 +577,7 @@
             <div class="vacation-controls" id="controls2" style="display: none;">
                 <div>
                     <label>Сумма расходов</label>
-                    <input type="number" id="amount2" placeholder="₽" min="0" oninput="updateTotal()">
+                    <input type="number" id="amount2" placeholder="₽" min="0">
                 </div>
                 <div>
                     <label>Планируемая дата сдачи авансового отчёта</label>
@@ -588,9 +595,12 @@
             <strong>Важно:</strong> Заявку можно подать до <strong>31.12.2026</strong>. После подтверждения — редактировать нельзя.
         </div>
 
-        <!-- === САМОСТОЯТЕЛЬНАЯ ПУТЁВКА === -->
-        <h3>Компенсация самостоятельно приобретённой путёвки</h3>
+        <div class="total-vacation">
+            Итого к компенсации: <span id="totalAmount">0 ₽</span>
+        </div>
 
+        <!-- ПУТЁВКА -->
+        <h3>Компенсация самостоятельно приобретённой путёвки</h3>
         <div class="trip-card">
             <div class="trip-inputs">
                 <div>
@@ -619,11 +629,7 @@
             <button class="confirm-btn" id="confirmTripBtn" onclick="confirmTrip()" disabled>Подтвердить путёвку</button>
         </div>
 
-        <div class="notification">
-            <strong>Важно:</strong> Одна путёвка на год. После подтверждения — редактировать нельзя.
-        </div>
-
-        <!-- === КОМПЕНСАЦИЯ ЗАТРАТ === -->
+        <!-- ЗАТРАТЫ -->
         <h3>Компенсация затрат</h3>
         <label>Количество детей: </label>
         <select id="numChildren" onchange="updateChildRows()" style="width: 100%; padding: 10px; border-radius: 8px; margin-top: 8px;">
@@ -649,12 +655,11 @@
             </table>
         </div>
 
-        <!-- === ЛАГЕРЬ === -->
+        <!-- ЛАГЕРЬ -->
         <h3>Запись на детский лагерь</h3>
         <div class="notification">
             В 2026 году: <strong>I смена: 01.06 – 23.06</strong>, <strong>II смена: 27.07 – 16.08</strong>. Укажите до 03.03.2026.
         </div>
-
         <div class="camp-section" id="campSection">
             <div class="camp-controls">
                 <div class="camp-item">
@@ -675,7 +680,7 @@
                 </div>
                 <button class="add-btn" onclick="addEnrollment()">+ Добавить</button>
                 <div style="display: flex; gap: 8px; margin-top: 12px;">
-                    <button class="confirm-btn" onclick="confirmAllEnrollments()" style="flex: 1; background: var(--primary);">Подтвердить все</button>
+                    <button class="confirm-btn" onclick="confirmAllEnrollments()" style="flex: 1;">Подтвердить все</button>
                     <button class="confirm-btn" onclick="cancelAllEnrollments()" style="flex: 1; background: var(--danger);">Отменить</button>
                 </div>
             </div>
@@ -684,7 +689,7 @@
         </div>
     </div>
 
-    <!-- Модальное окно -->
+    <!-- МОДАЛЬНОЕ ОКНО -->
     <div id="confirmationModal" class="modal">
         <div class="modal-content">
             <h3>Заявка отправлена!</h3>
@@ -694,11 +699,26 @@
     </div>
 
     <script>
-        // === ФОРМАТИРОВАНИЕ ДАТЫ ДД.ММ.ГГГГ ===
+        // === ФОРМАТИРОВАНИЕ ДАТЫ ===
         function formatDate(dateStr) {
             if (!dateStr) return '';
             const [y, m, d] = dateStr.split('-');
             return `${d}.${m}.${y}`;
+        }
+
+        // === ПЕНСИЯ ===
+        document.getElementById('retirementDate').addEventListener('input', () => {
+            const date = document.getElementById('retirementDate').value;
+            document.getElementById('confirmRetirementBtn').disabled = !date;
+        });
+
+        function confirmRetirement() {
+            const block = document.getElementById('pensionBlock');
+            block.classList.add('confirmed');
+            block.querySelectorAll('input, button').forEach(el => el.disabled = true);
+            document.getElementById('confirmRetirementBtn').textContent = 'Подтверждено';
+            const date = formatDate(document.getElementById('retirementDate').value);
+            showModal(`Планируемое увольнение на пенсию:<br><strong>${date}</strong>`);
         }
 
         // === СОБЫТИЯ ===
@@ -727,7 +747,6 @@
             event.classList.add('confirmed');
             event.querySelectorAll('input, select, button').forEach(el => el.disabled = true);
             document.getElementById(`confirm${id.charAt(0).toUpperCase() + id.slice(1)}Btn`).textContent = 'Подтверждено';
-
             let text = '';
             if (id === 'family') {
                 const childText = document.getElementById('familyChild').selectedOptions[0].text;
@@ -735,7 +754,6 @@
             } else {
                 text = `Вступление в брак: <strong>${formatDate(document.getElementById('marriageDate').value)}</strong>`;
             }
-
             showModal(text);
         }
 
@@ -760,12 +778,10 @@
             card.classList.add('confirmed');
             card.querySelectorAll('input, button').forEach(el => el.disabled = true);
             document.getElementById(`confirmBtn${num}`).textContent = 'Подтверждено';
-
             const datesEl = card.querySelector('.vacation-dates');
             const start = datesEl.dataset.start;
             const end = datesEl.dataset.end;
             const amount = document.getElementById(`amount${num}`).value;
-
             const text = `Компенсация отпуска:<br><strong>${formatDate(start)}</strong> – <strong>${formatDate(end)}</strong><br>${amount} ₽`;
             showModal(text);
             updateTotal();
@@ -788,9 +804,7 @@
             const checkOut = document.getElementById('checkOut');
             if (checkIn) {
                 checkOut.min = checkIn;
-                if (checkOut.value && checkOut.value < checkIn) {
-                    checkOut.value = checkIn;
-                }
+                if (checkOut.value && checkOut.value < checkIn) checkOut.value = checkIn;
             } else {
                 checkOut.min = '2026-01-01';
             }
@@ -800,7 +814,6 @@
             const checkIn = document.getElementById('checkIn').value;
             const checkOut = document.getElementById('checkOut').value;
             const resort = document.getElementById('resort').value;
-
             if (checkIn && checkOut && resort && checkOut >= checkIn) {
                 const inDate = new Date(checkIn);
                 const outDate = new Date(checkOut);
@@ -808,7 +821,6 @@
                 const month = inDate.getMonth() + 1;
                 const isSummer = [6, 7, 8].includes(month);
                 const amount = isSummer ? 155220 : 170720;
-
                 document.getElementById('tripDays').textContent = `Дней: ${days}`;
                 document.getElementById('tripAmount').value = amount.toLocaleString('ru') + ' ₽';
                 document.getElementById('confirmTripBtn').disabled = false;
@@ -824,19 +836,8 @@
             card.classList.add('confirmed');
             card.querySelectorAll('input, select, button').forEach(el => el.disabled = true);
             document.getElementById('confirmTripBtn').textContent = 'Подтверждено';
-
             const text = `${document.getElementById('resort').value}<br><strong>${formatDate(document.getElementById('checkIn').value)}</strong> – <strong>${formatDate(document.getElementById('checkOut').value)}</strong><br>${document.getElementById('familyCount').value} чел. · ${document.getElementById('tripAmount').value}`;
             showModal(text);
-        }
-
-        // === МОДАЛЬНОЕ ОКНО ===
-        function showModal(content) {
-            document.getElementById('confirmationContent').innerHTML = content;
-            document.getElementById('confirmationModal').style.display = 'flex';
-        }
-
-        function closeModal() {
-            document.getElementById('confirmationModal').style.display = 'none';
         }
 
         // === ТАБЛИЦА ЗАТРАТ ===
@@ -943,22 +944,16 @@
             if (confirm(`Подтвердить ${enrollments.length} записей?`)) {
                 confirmedEnrollments = [...enrollments];
                 enrollments = [];
-
-                const text = confirmedEnrollments.map(e => 
-                    `Лагерь: ${e.childName}<br><strong>${e.shiftName}</strong>`
-                ).join('<hr>');
-
+                const text = confirmedEnrollments.map(e => `Лагерь: ${e.childName}<br><strong>${e.shiftName}</strong>`).join('<hr>');
                 showModal(text);
-
                 document.getElementById('campSection').classList.add('camp-confirmed');
-
-                const enrollmentList = document.getElementById('enrollmentList');
-                enrollmentList.innerHTML = '';
+                const list = document.getElementById('enrollmentList');
+                list.innerHTML = '';
                 confirmedEnrollments.forEach(e => {
                     const div = document.createElement('div');
                     div.className = 'enrollment-item';
                     div.innerHTML = `<div>${e.childName} — ${e.shiftName}</div>`;
-                    enrollmentList.appendChild(div);
+                    list.appendChild(div);
                 });
             }
         }
@@ -969,6 +964,16 @@
                 enrollments = [];
                 updateEnrollmentList();
             }
+        }
+
+        // === МОДАЛЬНОЕ ОКНО ===
+        function showModal(content) {
+            document.getElementById('confirmationContent').innerHTML = content;
+            document.getElementById('confirmationModal').style.display = 'flex';
+        }
+
+        function closeModal() {
+            document.getElementById('confirmationModal').style.display = 'none';
         }
 
         // === ИНИЦИАЛИЗАЦИЯ ===
