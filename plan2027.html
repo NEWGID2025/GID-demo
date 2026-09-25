@@ -1224,7 +1224,7 @@ function renderOsr(animate){
     + `<div class="cat total"><span>Итого на 2027 год</span><b class="num">${mln(sum)} млн</b></div>`;
   const LOAD=[38,41,57,96,143,188,171,119,72,64,58,49], lmax=Math.max(...LOAD), lpk=LOAD.indexOf(lmax);
   $("load").innerHTML = LOAD.map((v,i)=>`<div><i class="${i===lpk?"pk":""}" style="height:${Math.round(v/lmax*84)}px;transition-delay:${i*35}ms"></i>${i===lpk?`<b style="bottom:${Math.round(v/lmax*84)+22}px">${v}</b>`:""}<span>${MON3[i]}</span></div>`).join("");
-  $("loadInsight").textContent = `Пик — ${MONTHS[lpk]}: около ${lmax} обращений. Отдел заранее усилит приём в мае–июле и распределит проверку авансовых отчётов.`;
+  $("loadInsight").textContent = `Пик — ${MONTHS[lpk]}: около ${lmax} обращений. Отдел заранее усилит приём в мае–июле и распределит проверку заявлений.`;
   if(animate){
     $("load").classList.remove("shown");
     ch.classList.remove("shown");
