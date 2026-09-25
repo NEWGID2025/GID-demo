@@ -1,0 +1,758 @@
+<title>Планирование социальных льгот</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Onest:wght@400;500;600;700&family=Unbounded:wght@500;700&display=swap" media="print" onload="this.media='all'">
+<style>
+:root{
+  color-scheme: light;
+  --ink:#16283A;
+  --ink-2:#51647A;
+  --ink-3:#8797A8;
+  --primary:#0A5CA8;
+  --primary-ink:#FFFFFF;
+  --accent:#1597D6;
+  --tint:#E4EFF9;
+  --ground:#E9EFF5;
+  --surface:#FFFFFF;
+  --line:#DCE5EE;
+  --good:#1E8456;
+  --good-bg:#E3F4EB;
+  --warn:#9A6414;
+  --warn-bg:#FDF1DD;
+  --radius:18px;
+  --display:"Unbounded","Onest",system-ui,sans-serif;
+  --body:"Onest",-apple-system,"Segoe UI",Roboto,Arial,sans-serif;
+}
+*{box-sizing:border-box}
+html,body{height:100%}
+body{
+  margin:0;background:var(--ground);color:var(--ink);
+  font-family:var(--body);font-size:15px;line-height:1.45;
+  -webkit-font-smoothing:antialiased;
+}
+button,input,select{font:inherit;color:inherit}
+:focus-visible{outline:2.5px solid var(--accent);outline-offset:2px;border-radius:8px}
+@media (prefers-reduced-motion: reduce){*{transition:none!important;animation:none!important}}
+
+/* ---------- каркас приложения ---------- */
+.app{
+  max-width:440px;min-height:100%;margin:0 auto;background:var(--ground);
+  display:flex;flex-direction:column;position:relative;
+}
+@media (min-width:700px){
+  body{background:#D7E2EC}
+  .app{margin-block:24px;min-height:calc(100% - 48px);border-radius:28px;overflow:hidden;box-shadow:0 30px 70px rgba(16,40,64,.22)}
+}
+.concept{
+  display:flex;align-items:center;gap:8px;justify-content:center;
+  padding:7px 16px;background:var(--ink);color:#DDE7F1;font-size:12px;letter-spacing:.02em;
+}
+.concept b{color:#fff;font-weight:600}
+
+.top{
+  position:sticky;top:env(safe-area-inset-top,0px);z-index:5;
+  display:flex;align-items:center;gap:12px;padding:12px 16px;
+  background:rgba(233,239,245,.92);backdrop-filter:blur(10px);
+  border-bottom:1px solid var(--line);
+}
+.ava{
+  width:42px;height:42px;border-radius:50%;flex:none;display:grid;place-items:center;
+  background:var(--primary);color:#fff;font-weight:700;font-size:15px;
+}
+.who{min-width:0;flex:1}
+.who .n{font-weight:600;font-size:15.5px}
+.who .r{font-size:12.5px;color:var(--ink-2)}
+.year{
+  flex:none;padding:6px 11px;border-radius:999px;background:var(--surface);
+  border:1px solid var(--line);font-size:12.5px;font-weight:600;color:var(--primary);
+}
+
+main{flex:1;padding:16px 16px 28px;display:flex;flex-direction:column;gap:14px}
+.view[hidden]{display:none!important}
+.view{display:flex;flex-direction:column;gap:14px}
+
+h1.screen{
+  font-family:var(--display);font-weight:700;font-size:22px;line-height:1.2;margin:4px 0 0;
+  text-wrap:balance;letter-spacing:-.01em;
+}
+.lead{margin:0;color:var(--ink-2);font-size:14.5px}
+
+.card{background:var(--surface);border-radius:var(--radius);padding:16px;border:1px solid var(--line)}
+.card h2{margin:0 0 4px;font-size:16px;font-weight:700}
+.card .sub{margin:0 0 12px;color:var(--ink-2);font-size:13px}
+.eyebrow{font-size:11.5px;letter-spacing:.08em;text-transform:uppercase;color:var(--ink-3);font-weight:600;margin:10px 2px -4px}
+
+.privacy{
+  display:flex;gap:12px;align-items:flex-start;background:var(--tint);border:0;
+}
+.privacy svg{flex:none;margin-top:2px}
+.privacy p{margin:0;font-size:13.5px;color:var(--ink)}
+
+.attn{background:var(--warn-bg);border-color:#F1DDB7}
+.attn .tag{display:inline-flex;align-items:center;gap:6px;font-size:12px;font-weight:700;color:var(--warn);margin-bottom:6px}
+.attn p{margin:0 0 12px;font-size:13.5px}
+.attn.done{background:var(--good-bg);border-color:#C3E6D2}
+.attn.done .tag{color:var(--good)}
+
+/* ---------- переключатели ---------- */
+.row{display:flex;align-items:center;gap:12px;padding:12px 0;border-top:1px solid var(--line)}
+.row:first-of-type{border-top:0}
+.row .t{flex:1;min-width:0}
+.row .t b{display:block;font-weight:600;font-size:14.5px}
+.row .t span{font-size:12.5px;color:var(--ink-2)}
+.sw{position:relative;width:48px;height:28px;flex:none}
+.sw input{position:absolute;inset:0;opacity:0;margin:0;cursor:pointer;z-index:1}
+.sw i{position:absolute;inset:0;border-radius:999px;background:#C9D4DF;transition:background .18s}
+.sw i::after{content:"";position:absolute;top:3px;left:3px;width:22px;height:22px;border-radius:50%;background:#fff;box-shadow:0 1px 3px rgba(0,0,0,.2);transition:transform .18s}
+.sw input:checked + i{background:var(--primary)}
+.sw input:checked + i::after{transform:translateX(20px)}
+.sw input:focus-visible + i{outline:2.5px solid var(--accent);outline-offset:2px}
+
+.more{display:flex;flex-direction:column;gap:10px;padding:0 0 12px}
+.more[hidden]{display:none}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.fld{display:flex;flex-direction:column;gap:5px;min-width:0}
+.fld label{font-size:12px;color:var(--ink-2);font-weight:500}
+.fld input,.fld select{
+  width:100%;min-width:0;padding:10px 12px;border-radius:12px;border:1.5px solid var(--line);
+  background:#FAFCFE;font-size:15px;
+}
+.fld input:focus,.fld select:focus{outline:none;border-color:var(--accent);background:#fff}
+.est{
+  display:flex;justify-content:space-between;align-items:baseline;gap:10px;
+  padding:10px 12px;border-radius:12px;background:var(--tint);font-size:13px;color:var(--ink-2);
+}
+.est b{color:var(--ink);font-size:15px;font-variant-numeric:tabular-nums;white-space:nowrap}
+
+.seg{display:flex;gap:6px;flex-wrap:wrap}
+.seg button{
+  padding:8px 12px;border-radius:999px;border:1.5px solid var(--line);background:#FAFCFE;
+  font-size:13px;font-weight:500;cursor:pointer;
+}
+.seg button[aria-pressed="true"]{background:var(--primary);border-color:var(--primary);color:#fff}
+
+.step{display:flex;align-items:center;gap:0;border:1.5px solid var(--line);border-radius:12px;overflow:hidden;background:#FAFCFE;width:max-content}
+.step button{width:40px;height:40px;border:0;background:transparent;font-size:18px;cursor:pointer;color:var(--primary)}
+.step output{min-width:32px;text-align:center;font-weight:600;font-variant-numeric:tabular-nums}
+
+/* ---------- отпуск ---------- */
+.vac{border:1.5px solid var(--line);border-radius:14px;padding:12px;display:flex;flex-direction:column;gap:10px}
+.vac.on{border-color:var(--primary);background:#F6FAFE}
+.vac-h{display:flex;align-items:center;gap:12px}
+.vac-h .d{flex:1}
+.vac-h .d b{display:block;font-variant-numeric:tabular-nums}
+.vac-h .d span{font-size:12.5px;color:var(--ink-2)}
+
+/* ---------- дети ---------- */
+.kid{border-top:1px solid var(--line);padding-top:12px;margin-top:12px}
+.kid:first-of-type{border-top:0;padding-top:0;margin-top:0}
+.kid-h{display:flex;justify-content:space-between;align-items:baseline;gap:8px;margin-bottom:8px}
+.kid-h b{font-size:14.5px}
+.kid-h span{font-size:12px;color:var(--ink-2)}
+.q4{display:grid;grid-template-columns:repeat(4,1fr);gap:6px}
+.q4 .fld input{padding:9px 8px;font-size:14px;text-align:right;font-variant-numeric:tabular-nums}
+.meter{margin-top:8px}
+.meter .bar{height:8px;border-radius:999px;background:#E3EAF1;overflow:hidden}
+.meter .bar i{display:block;height:100%;border-radius:999px;background:var(--primary);transition:width .25s}
+.meter .bar i.over{background:#C0392B}
+.meter .cap{display:flex;justify-content:space-between;font-size:12px;color:var(--ink-2);margin-top:5px;font-variant-numeric:tabular-nums}
+
+/* ---------- итог ---------- */
+.total{background:var(--ink);color:#fff;border:0}
+.total .sub{color:#AFC2D6}
+.total .big{font-family:var(--display);font-weight:700;font-size:26px;letter-spacing:-.01em;font-variant-numeric:tabular-nums;margin:2px 0 12px}
+.qline{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin-bottom:14px}
+.qline div{background:rgba(255,255,255,.08);border-radius:10px;padding:8px}
+.qline span{display:block;font-size:11px;color:#AFC2D6}
+.qline b{font-size:13px;font-variant-numeric:tabular-nums}
+.btn{
+  width:100%;padding:14px;border:0;border-radius:14px;cursor:pointer;
+  background:var(--accent);color:#fff;font-weight:700;font-size:15.5px;
+}
+.btn:disabled{opacity:.5;cursor:default}
+.btn.ghost{background:var(--tint);color:var(--primary)}
+.fine{font-size:12px;color:#AFC2D6;margin:10px 0 0}
+
+/* ---------- сводка ОСР ---------- */
+.tiles{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.tile{background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:12px 14px}
+.tile span{display:block;font-size:12px;color:var(--ink-2)}
+.tile b{font-family:var(--display);font-weight:700;font-size:21px;font-variant-numeric:tabular-nums}
+.tile small{display:block;font-size:11.5px;color:var(--ink-3)}
+.tile.mine b::after{content:"";display:inline-block;width:7px;height:7px;border-radius:50%;background:var(--accent);margin-left:6px;vertical-align:middle}
+
+.chart{position:relative}
+.chart svg{display:block;width:100%;height:auto;overflow:visible}
+.chart .tip{
+  position:absolute;pointer-events:none;background:var(--ink);color:#fff;border-radius:10px;
+  padding:7px 10px;font-size:12.5px;white-space:nowrap;transform:translate(-50%,-100%);
+  box-shadow:0 6px 18px rgba(0,0,0,.18);font-variant-numeric:tabular-nums;
+}
+.chart .tip[hidden]{display:none}
+.legend-note{font-size:12px;color:var(--ink-2);display:flex;align-items:center;gap:6px;margin-top:6px}
+.legend-note i{width:12px;height:12px;border-radius:3px;background:var(--accent);display:inline-block}
+
+.tbl{width:100%;border-collapse:collapse;font-size:13.5px}
+.tbl td{padding:9px 0;border-top:1px solid var(--line)}
+.tbl td:last-child{text-align:right;font-variant-numeric:tabular-nums;font-weight:600;white-space:nowrap}
+.tbl tr:first-child td{border-top:0}
+.tbl tr.sum td{font-weight:700;border-top:1.5px solid var(--ink)}
+.tbl .plus{display:block;font-size:11.5px;color:var(--accent);font-weight:600}
+
+/* ---------- о сервисе ---------- */
+.why{display:flex;flex-direction:column;gap:12px}
+.why div{display:flex;gap:12px}
+.why .n{flex:none;width:28px;height:28px;border-radius:50%;background:var(--tint);color:var(--primary);display:grid;place-items:center;font-weight:700;font-size:13px}
+.why p{margin:0;font-size:14px}
+.why p b{display:block}
+
+/* ---------- таббар ---------- */
+.tabbar{
+  position:sticky;bottom:0;z-index:6;display:grid;grid-template-columns:repeat(3,1fr);
+  background:var(--surface);border-top:1px solid var(--line);
+  padding:6px 8px calc(6px + env(safe-area-inset-bottom,0px));
+}
+.tabbar button{
+  border:0;background:transparent;padding:6px 4px;border-radius:12px;cursor:pointer;
+  display:flex;flex-direction:column;align-items:center;gap:3px;font-size:11.5px;font-weight:600;color:var(--ink-3);
+}
+.tabbar button svg{width:22px;height:22px}
+.tabbar button[aria-selected="true"]{color:var(--primary);background:var(--tint)}
+
+/* ---------- лист подтверждения ---------- */
+.sheet{position:fixed;inset:0;z-index:20;display:flex;align-items:flex-end;justify-content:center;background:rgba(12,28,44,.45)}
+.sheet[hidden]{display:none}
+.sheet .panel{
+  width:100%;max-width:440px;background:var(--surface);border-radius:24px 24px 0 0;
+  padding:20px 18px calc(18px + env(safe-area-inset-bottom,0px));max-height:85%;overflow:auto;
+  animation:up .25s ease-out;
+}
+@keyframes up{from{transform:translateY(40px);opacity:.4}to{transform:none;opacity:1}}
+.sheet .ok{width:52px;height:52px;border-radius:50%;background:var(--good-bg);display:grid;place-items:center;margin-bottom:10px}
+.sheet h3{margin:0 0 6px;font-family:var(--display);font-size:19px}
+.sheet ul{margin:10px 0 14px;padding-left:18px;font-size:14px}
+.sheet li{margin:4px 0}
+.sheet .note{font-size:12.5px;color:var(--ink-2);background:var(--tint);border-radius:12px;padding:10px 12px;margin-bottom:14px}
+.sheet .btns{display:grid;gap:8px}
+</style>
+
+<div class="app">
+  <div class="concept"><b>Концепт-прототип</b> · демонстрационные данные</div>
+
+  <header class="top">
+    <div class="ava" aria-hidden="true">МА</div>
+    <div class="who">
+      <div class="n">Андреев Максим</div>
+      <div class="r">Демо-профиль работника</div>
+    </div>
+    <div class="year">План на 2027</div>
+  </header>
+
+  <main>
+    <!-- ================= МОЙ ПЛАН ================= -->
+    <section class="view" id="view-plan" aria-labelledby="t-plan">
+      <h1 class="screen" id="t-plan">Какие льготы вы планируете в&nbsp;2027&nbsp;году?</h1>
+      <p class="lead">Отметьте то, что уже знаете. Это не заявление: по ответам отдел заранее рассчитывает бюджет и нагрузку. Планы можно поменять в любой момент.</p>
+
+      <div class="card privacy">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#0A5CA8" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4.5" y="10.5" width="15" height="10" rx="2.2"/><path d="M8 10.5V7.5a4 4 0 0 1 8 0v3"/></svg>
+        <p>Ответы видит только отдел социального развития. Руководителю и коллегам они не передаются.</p>
+      </div>
+
+      <div class="card attn" id="pensionCard">
+        <div class="tag" id="pensionTag">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 7.5v5.5M12 16.5v.01"/></svg>
+          <span>Требует внимания</span>
+        </div>
+        <p id="pensionText">Вы сообщили в отдел кадров о назначении страховой пенсии. Укажите, когда примерно планируете уволиться на пенсию, — это нужно для расчёта оценочных обязательств.</p>
+        <div class="grid2" id="pensionForm">
+          <div class="fld"><label for="pensionMonth">Месяц</label>
+            <select id="pensionMonth"></select>
+          </div>
+          <div class="fld" style="justify-content:flex-end"><button class="btn ghost" id="pensionBtn" type="button">Указать</button></div>
+        </div>
+      </div>
+
+      <div class="eyebrow">Жизненные события</div>
+      <div class="card">
+        <div class="row">
+          <div class="t"><b>Ожидается пополнение в семье</b><span>Материальная помощь при рождении ребёнка</span></div>
+          <label class="sw"><input type="checkbox" id="evBirth" aria-label="Ожидается пополнение в семье"><i></i></label>
+        </div>
+        <div class="more" id="evBirthMore" hidden>
+          <div class="grid2">
+            <div class="fld"><label for="birthMonth">Примерный месяц</label><select id="birthMonth"></select></div>
+            <div class="fld"><label for="birthOrder">Какой ребёнок в семье</label>
+              <select id="birthOrder"><option value="12">1-й или 2-й</option><option value="3">3-й и далее</option></select>
+            </div>
+          </div>
+          <div class="est"><span id="birthEstNote">10 ЕСТ + районный коэффициент</span><b id="birthEst">—</b></div>
+        </div>
+
+        <div class="row">
+          <div class="t"><b>Впервые вступаю в брак</b><span>Единовременное пособие</span></div>
+          <label class="sw"><input type="checkbox" id="evMarriage" aria-label="Впервые вступаю в брак"><i></i></label>
+        </div>
+        <div class="more" id="evMarriageMore" hidden>
+          <div class="fld"><label for="marriageMonth">Примерный месяц</label><select id="marriageMonth"></select></div>
+          <div class="est"><span>5 ЕСТ + районный коэффициент</span><b id="marriageEst">—</b></div>
+        </div>
+      </div>
+
+      <div class="eyebrow">Проезд к месту отпуска и обратно</div>
+      <div class="card">
+        <p class="sub">Периоды подтянуты из вашего графика отпусков на 2027 год.</p>
+        <div style="display:flex;flex-direction:column;gap:10px" id="vacList"></div>
+      </div>
+
+      <div class="eyebrow">Путёвка на отдых</div>
+      <div class="card">
+        <div class="row">
+          <div class="t"><b>Планирую купить путёвку сам</b><span>Компенсация стоимости самостоятельно приобретённой путёвки</span></div>
+          <label class="sw"><input type="checkbox" id="trip" aria-label="Планирую купить путёвку"><i></i></label>
+        </div>
+        <div class="more" id="tripMore" hidden>
+          <div class="grid2">
+            <div class="fld"><label for="tripIn">Заезд</label><input type="date" id="tripIn" value="2027-07-05" min="2027-01-01" max="2027-12-31"></div>
+            <div class="fld"><label for="tripOut">Выезд</label><input type="date" id="tripOut" value="2027-07-19" min="2027-01-01" max="2027-12-31"></div>
+          </div>
+          <div class="fld"><label for="tripPlace">Объект отдыха</label>
+            <select id="tripPlace">
+              <option>ГК «Гранд Отель Поляна»</option>
+              <option>«Поляна 1389»</option>
+              <option>ОГК «Лазурная Отель и Спа»</option>
+            </select>
+          </div>
+          <div class="grid2">
+            <div class="fld"><label>Сколько человек едет</label>
+              <div class="step"><button type="button" data-step="-1" aria-label="Меньше">−</button><output id="tripPeople">2</output><button type="button" data-step="1" aria-label="Больше">+</button></div>
+            </div>
+            <div class="fld"><label for="tripCost">Примерная стоимость, ₽</label><input id="tripCost" inputmode="numeric" value="180000"></div>
+          </div>
+          <div class="est"><span id="tripNote">—</span><b id="tripEst">—</b></div>
+        </div>
+      </div>
+
+      <div class="eyebrow">Дети: сад, кружки, спорт</div>
+      <div class="card">
+        <p class="sub">Сколько примерно потратите по кварталам. Остаток лимита считается сразу.</p>
+        <div id="kidList"></div>
+      </div>
+
+      <div class="eyebrow">Детский лагерь</div>
+      <div class="card">
+        <p class="sub">Предварительная запись на смены 2027 года. Даты ориентировочные.</p>
+        <div class="kid-h"><b>Артём, 11 лет</b><span>смена</span></div>
+        <div class="seg" id="campSeg" role="group" aria-label="Смена лагеря для Артёма">
+          <button type="button" data-camp="0" aria-pressed="true">Не поедет</button>
+          <button type="button" data-camp="1" aria-pressed="false">I смена · 1–23 июня</button>
+          <button type="button" data-camp="2" aria-pressed="false">II смена · 27 июля – 16 авг.</button>
+        </div>
+      </div>
+
+      <div class="card total" aria-live="polite">
+        <h2>Ваш план на 2027</h2>
+        <p class="sub" id="totalNote">Отметьте хотя бы одну льготу</p>
+        <div class="big" id="totalBig">0,00 ₽</div>
+        <div class="qline" id="qline"></div>
+        <button class="btn" id="submitBtn" type="button" disabled>Отправить план в отдел</button>
+        <p class="fine">Расчёт ориентировочный, по ЕСТ 2026 года — 15 522,00 ₽. Выплату оформляют отдельным заявлением, когда событие наступит.</p>
+      </div>
+    </section>
+
+    <!-- ================= СВОДКА ОСР ================= -->
+    <section class="view" id="view-osr" aria-labelledby="t-osr" hidden>
+      <h1 class="screen" id="t-osr">Потребность в&nbsp;льготах на&nbsp;2027&nbsp;год</h1>
+      <p class="lead">Так отдел видит сумму ответов всех работников. Вместо статистики прошлых лет — план по реальным намерениям.</p>
+
+      <div class="tiles" id="tiles"></div>
+
+      <div class="card">
+        <h2>Прогноз выплат по кварталам, млн ₽</h2>
+        <p class="sub">Нажмите на столбец, чтобы увидеть сумму</p>
+        <div class="chart" id="chart">
+          <svg id="chartSvg" viewBox="0 0 360 200" role="img" aria-labelledby="chartDesc"><desc id="chartDesc">Столбчатая диаграмма прогноза выплат по кварталам</desc></svg>
+          <div class="tip" id="tip" hidden></div>
+        </div>
+      </div>
+
+      <div class="card">
+        <h2>По видам льгот</h2>
+        <p class="sub">Ориентировочно, млн ₽</p>
+        <table class="tbl" id="catTable"></table>
+      </div>
+
+      <div class="card privacy">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#0A5CA8" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 19V5M4 19h16"/><path d="M8 15l3.5-4 3 2.5L19 8"/></svg>
+        <p>Цифры сводки — демонстрационные. После отправки вашего плана он добавится к ним и будет отмечен точкой.</p>
+      </div>
+    </section>
+
+    <!-- ================= О СЕРВИСЕ ================= -->
+    <section class="view" id="view-about" aria-labelledby="t-about" hidden>
+      <h1 class="screen" id="t-about">Зачем это нужно</h1>
+      <div class="card why">
+        <div><span class="n">1</span><p><b>Бюджет по реальным планам</b>Отдел видит потребность до того, как придут заявления, а не пересчитывает статистику прошлых лет.</p></div>
+        <div><span class="n">2</span><p><b>Без неловких разговоров</b>О многом, например о пополнении в семье, заранее не хочется говорить руководителю. Здесь ответ видит только отдел.</p></div>
+        <div><span class="n">3</span><p><b>Из дома, с телефона</b>На производстве телефоны под запретом, поэтому план удобно заполнить в личное время в корпоративном приложении.</p></div>
+        <div><span class="n">4</span><p><b>Без новой системы</b>Сервис собирается штатными средствами корпоративного приложения: формами и конструктором сервисов.</p></div>
+      </div>
+      <div class="card">
+        <h2>О прототипе</h2>
+        <p class="sub" style="margin:0">Концепт интерфейса, подготовленный отделом социального развития. Суммы, состав семьи и сводка отдела — демонстрационные. Ничего никуда не отправляется: всё происходит только на этом экране.</p>
+      </div>
+    </section>
+  </main>
+
+  <nav class="tabbar" role="tablist" aria-label="Разделы">
+    <button role="tab" id="tab-plan" aria-controls="view-plan" aria-selected="true" data-tab="plan">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4" y="4.5" width="16" height="16" rx="2.5"/><path d="M8 3v3M16 3v3M4 9.5h16M8.5 14l2 2 4-4"/></svg>
+      Мой план
+    </button>
+    <button role="tab" id="tab-osr" aria-controls="view-osr" aria-selected="false" data-tab="osr">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 20V11M10 20V5M15 20v-7M20 20V8"/></svg>
+      Сводка отдела
+    </button>
+    <button role="tab" id="tab-about" aria-controls="view-about" aria-selected="false" data-tab="about">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="8.5"/><path d="M12 11v5M12 8v.01"/></svg>
+      О сервисе
+    </button>
+  </nav>
+
+  <div class="sheet" id="sheet" hidden role="dialog" aria-modal="true" aria-labelledby="sheetTitle">
+    <div class="panel">
+      <div class="ok"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#1E8456" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg></div>
+      <h3 id="sheetTitle">План отправлен</h3>
+      <div style="font-size:14px;color:var(--ink-2)">Отдел получил ваши намерения на 2027 год:</div>
+      <ul id="sheetList"></ul>
+      <div class="note">Это не заявление на выплату. Когда событие наступит, оформите его как обычно — отдел уже будет готов.</div>
+      <div class="btns">
+        <button class="btn" id="toOsr" type="button">Посмотреть сводку отдела</button>
+        <button class="btn ghost" id="sheetClose" type="button">Закрыть</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+(function(){
+  "use strict";
+  /* ---------- константы расчёта ---------- */
+  const EST = 15522, RK = 1.7;
+  const LIMIT_SUMMER = 155220, LIMIT_OFF = 170742;
+  const MONTHS = ["январь","февраль","март","апрель","май","июнь","июль","август","сентябрь","октябрь","ноябрь","декабрь"];
+  const MONTHS_G = ["января","февраля","марта","апреля","мая","июня","июля","августа","сентября","октября","ноября","декабря"];
+  const $ = (id)=>document.getElementById(id);
+  const rub = (n)=>n.toLocaleString("ru-RU",{minimumFractionDigits:2,maximumFractionDigits:2})+" ₽";
+  const mln = (n)=>(n/1e6).toLocaleString("ru-RU",{minimumFractionDigits:1,maximumFractionDigits:1});
+  const num = (s)=>{ const v = parseFloat(String(s).replace(/\s/g,"").replace(",",".")); return isNaN(v)||v<0?0:v; };
+  const quarterOf = (m)=>Math.floor(m/3); // m: 0..11
+
+  function fillMonths(sel, def){
+    sel.innerHTML = MONTHS.map((m,i)=>`<option value="${i}"${i===def?" selected":""}>${m[0].toUpperCase()+m.slice(1)}</option>`).join("");
+  }
+  fillMonths($("pensionMonth"), 9);
+  fillMonths($("birthMonth"), 4);
+  fillMonths($("marriageMonth"), 7);
+
+  /* ---------- демо-данные работника ---------- */
+  const vacations = [
+    {id:"v1", from:"12.05.2027", to:"27.05.2027", days:16, reportDefault:5, sum:"48000"},
+    {id:"v2", from:"02.11.2027", to:"30.11.2027", days:29, reportDefault:11, sum:"36000"},
+  ];
+  const kids = [
+    {id:"k1", name:"Маша, 5 лет", cat:"sad", label:"Детский сад", scope:"на ребёнка", limit:93132, q:[21000,21000,15000,21000]},
+    {id:"k2", name:"Артём, 11 лет", cat:"dop", label:"Дополнительное образование: робототехника", scope:"на ребёнка", limit:31044, q:[7500,7500,0,7500]},
+    {id:"k3", name:"Вся семья", cat:"sport", label:"Спорт: бассейн, секции", scope:"на семью", limit:31044, q:[0,0,0,0]},
+  ];
+
+  /* ---------- отпуска ---------- */
+  $("vacList").innerHTML = vacations.map(v=>`
+    <div class="vac" id="${v.id}">
+      <div class="vac-h">
+        <div class="d"><b>${v.from} – ${v.to}</b><span>${v.days} календарных дней</span></div>
+        <label class="sw"><input type="checkbox" id="${v.id}On" aria-label="Компенсация проезда за отпуск ${v.from} – ${v.to}"><i></i></label>
+      </div>
+      <div class="more" id="${v.id}More" hidden>
+        <div class="grid2">
+          <div class="fld"><label for="${v.id}Sum">Примерно на проезд, ₽</label><input id="${v.id}Sum" inputmode="numeric" value="${v.sum}"></div>
+          <div class="fld"><label for="${v.id}Rep">Сдам авансовый отчёт</label><select id="${v.id}Rep"></select></div>
+        </div>
+        <div class="fld"><label>С&nbsp;собой иждивенцев</label>
+          <div class="step" data-target="${v.id}Dep"><button type="button" data-step="-1" aria-label="Меньше">−</button><output id="${v.id}Dep">0</output><button type="button" data-step="1" aria-label="Больше">+</button></div>
+        </div>
+      </div>
+    </div>`).join("");
+  vacations.forEach(v=>fillMonths($(v.id+"Rep"), v.reportDefault));
+
+  /* ---------- дети ---------- */
+  $("kidList").innerHTML = kids.map(k=>`
+    <div class="kid">
+      <div class="kid-h"><b>${k.name}</b><span>${k.label} · лимит ${rub(k.limit).replace(",00","")} ${k.scope}</span></div>
+      <div class="q4">
+        ${k.q.map((v,i)=>`<div class="fld"><label for="${k.id}q${i}">${["I","II","III","IV"][i]} кв.</label><input id="${k.id}q${i}" inputmode="numeric" value="${v||""}" placeholder="0"></div>`).join("")}
+      </div>
+      <div class="meter"><div class="bar"><i id="${k.id}Bar"></i></div><div class="cap"><span id="${k.id}Used"></span><span id="${k.id}Left"></span></div></div>
+    </div>`).join("");
+
+  /* ---------- степперы ---------- */
+  document.addEventListener("click", (e)=>{
+    const b = e.target.closest("[data-step]");
+    if(!b) return;
+    const box = b.closest(".step");
+    const out = box.querySelector("output");
+    const min = out.id==="tripPeople" ? 1 : 0;
+    const max = out.id==="tripPeople" ? 6 : 4;
+    out.value = out.textContent = String(Math.min(max, Math.max(min, parseInt(out.textContent,10) + parseInt(b.dataset.step,10))));
+    recalc();
+  });
+
+  /* ---------- переключатели с раскрытием ---------- */
+  function bindToggle(inputId, moreId, wrapId){
+    $(inputId).addEventListener("change", ()=>{
+      $(moreId).hidden = !$(inputId).checked;
+      if(wrapId) $(wrapId).classList.toggle("on", $(inputId).checked);
+      recalc();
+    });
+  }
+  bindToggle("evBirth","evBirthMore");
+  bindToggle("evMarriage","evMarriageMore");
+  bindToggle("trip","tripMore");
+  vacations.forEach(v=>bindToggle(v.id+"On", v.id+"More", v.id));
+
+  document.querySelector("main").addEventListener("input", recalc);
+  document.querySelector("main").addEventListener("change", recalc);
+
+  /* ---------- лагерь ---------- */
+  let campShift = 0;
+  $("campSeg").addEventListener("click",(e)=>{
+    const b = e.target.closest("[data-camp]"); if(!b) return;
+    campShift = +b.dataset.camp;
+    $("campSeg").querySelectorAll("button").forEach(x=>x.setAttribute("aria-pressed", String(x===b)));
+    recalc();
+  });
+
+  /* ---------- пенсия ---------- */
+  let pensionMonth = null;
+  $("pensionBtn").addEventListener("click", ()=>{
+    pensionMonth = +$("pensionMonth").value;
+    $("pensionCard").classList.add("done");
+    $("pensionTag").querySelector("span").textContent = "Готово";
+    $("pensionText").textContent = `Планируемое увольнение на пенсию: ${MONTHS[pensionMonth]} 2027 года. Спасибо, это поможет заранее подготовить документы и выплаты.`;
+    $("pensionForm").hidden = true;
+    recalc();
+  });
+
+  /* ---------- главный расчёт ---------- */
+  let plan = null;
+  function recalc(){
+    const q = [0,0,0,0];
+    const items = [];
+    const cats = {travel:0, trip:0, sad:0, dop:0, birth:0, marriage:0};
+
+    // рождение
+    if($("evBirth").checked){
+      const est = $("birthOrder").value === "3" ? 15 : 10;
+      const amount = est * EST * RK;
+      const m = +$("birthMonth").value;
+      $("birthEstNote").textContent = `${est} ЕСТ + районный коэффициент`;
+      $("birthEst").textContent = rub(amount);
+      q[quarterOf(m)] += amount; cats.birth += amount;
+      items.push(`Пополнение в семье, ${MONTHS[m]} — ${rub(amount)}`);
+    }
+    if($("evMarriage").checked){
+      const amount = 5 * EST * RK;
+      const m = +$("marriageMonth").value;
+      $("marriageEst").textContent = rub(amount);
+      q[quarterOf(m)] += amount; cats.marriage += amount;
+      items.push(`Вступление в брак, ${MONTHS[m]} — ${rub(amount)}`);
+    }
+
+    // отпуска
+    vacations.forEach(v=>{
+      if(!$(v.id+"On").checked) return;
+      const s = num($(v.id+"Sum").value);
+      const m = +$(v.id+"Rep").value;
+      const dep = +$(v.id+"Dep").textContent;
+      q[quarterOf(m)] += s; cats.travel += s;
+      items.push(`Проезд в отпуск ${v.from}${dep?`, иждивенцев: ${dep}`:""} — ${rub(s)}`);
+    });
+
+    // путёвка
+    if($("trip").checked){
+      const inD = new Date($("tripIn").value), outD = new Date($("tripOut").value);
+      const valid = !isNaN(inD) && !isNaN(outD) && outD > inD;
+      if(valid){
+        const nights = Math.round((outD - inD)/864e5);
+        const summer = inD.getMonth() >= 5 && inD.getMonth() <= 7;
+        const limit = summer ? LIMIT_SUMMER : LIMIT_OFF;
+        const cost = num($("tripCost").value);
+        const comp = Math.min(cost, limit);
+        const people = +$("tripPeople").textContent;
+        $("tripNote").textContent = `${nights} ночей · ${summer?"летний":"межсезонный"} лимит ${rub(limit)}`;
+        $("tripEst").textContent = rub(comp);
+        q[quarterOf(outD.getMonth())] += comp; cats.trip += comp;
+        items.push(`Путёвка, ${$("tripPlace").value}, ${inD.getDate()} ${MONTHS_G[inD.getMonth()]}, человек: ${people} — ${rub(comp)}`);
+      }else{
+        $("tripNote").textContent = "Проверьте даты: выезд позже заезда";
+        $("tripEst").textContent = "—";
+      }
+    }
+
+    // дети
+    kids.forEach(k=>{
+      let used = 0;
+      for(let i=0;i<4;i++){
+        const v = num($(k.id+"q"+i).value);
+        used += v;
+        q[i] += Math.min(v, Math.max(0, k.limit - (used - v)));
+      }
+      const pct = Math.min(100, used / k.limit * 100);
+      const bar = $(k.id+"Bar");
+      bar.style.width = pct + "%";
+      bar.classList.toggle("over", used > k.limit);
+      $(k.id+"Used").textContent = `запланировано ${rub(used)}`;
+      $(k.id+"Left").textContent = used > k.limit ? `сверх лимита ${rub(used-k.limit)}` : `остаток ${rub(k.limit-used)}`;
+      const capped = Math.min(used, k.limit);
+      if(capped > 0){
+        if(k.cat==="sad") cats.sad += capped; else cats.dop += capped;
+        items.push(`${k.label} (${k.cat==="sport"?"семья":k.name.split(",")[0]}) — ${rub(capped)}`);
+      }
+    });
+
+    if(campShift){
+      items.push(`Лагерь, Артём — ${campShift===1?"I смена":"II смена"}`);
+    }
+    if(pensionMonth !== null){
+      items.push(`Увольнение на пенсию — ${MONTHS[pensionMonth]}`);
+    }
+
+    const total = q.reduce((a,b)=>a+b,0);
+    $("totalBig").textContent = rub(total);
+    $("totalNote").textContent = items.length ? `Отмечено пунктов: ${items.length}` : "Отметьте хотя бы одну льготу";
+    $("qline").innerHTML = q.map((v,i)=>`<div><span>${["I","II","III","IV"][i]} квартал</span><b>${v? (v/1000).toLocaleString("ru-RU",{maximumFractionDigits:0})+" тыс.":"—"}</b></div>`).join("");
+    $("submitBtn").disabled = !items.length;
+
+    plan = {q, items, cats, total,
+      birth: $("evBirth").checked ? 1 : 0,
+      trip: $("trip").checked ? 1 : 0,
+      camp: campShift ? 1 : 0};
+  }
+
+  /* ---------- сводка ОСР (демо-база) ---------- */
+  const BASE = {
+    respondents: 1243, staff: 1912, births: 37, trips: 212, camp: 164,
+    q: [18.4e6, 41.7e6, 63.2e6, 27.9e6],
+    cats: [
+      {key:"travel", name:"Проезд к месту отпуска", v:58.3e6},
+      {key:"trip",   name:"Путёвки на отдых", v:44.9e6},
+      {key:"sad",    name:"Детский сад", v:21.6e6},
+      {key:"dop",    name:"Кружки, секции, допобразование", v:11.8e6},
+      {key:"birth",  name:"Рождение детей", v:9.8e6},
+      {key:"marriage", name:"Вступление в брак", v:4.8e6},
+    ],
+  };
+  let mine = null; // план, добавленный в сводку
+
+  function renderOsr(){
+    const m = mine;
+    const tiles = [
+      {label:"Заполнили план", val:(BASE.respondents + (m?1:0)).toLocaleString("ru-RU"), small:`из ${BASE.staff.toLocaleString("ru-RU")} работников`, mine:!!m},
+      {label:"Ожидаемых рождений", val:BASE.births + (m?m.birth:0), small:"матпомощь заложена", mine:!!(m&&m.birth)},
+      {label:"Путёвок на отдых", val:BASE.trips + (m?m.trip:0), small:"самостоятельно купят", mine:!!(m&&m.trip)},
+      {label:"Детей в лагерь", val:BASE.camp + (m?m.camp:0), small:"две смены", mine:!!(m&&m.camp)},
+    ];
+    $("tiles").innerHTML = tiles.map(t=>`<div class="tile${t.mine?" mine":""}"><span>${t.label}</span><b>${t.val}</b><small>${t.small}</small></div>`).join("");
+
+    const q = BASE.q.map((v,i)=>v + (m?m.q[i]:0));
+    drawChart(q);
+
+    const rows = BASE.cats.map(c=>{
+      const add = m ? (m.cats[c.key]||0) : 0;
+      return `<tr><td>${c.name}${add?`<span class="plus">в т.ч. ваш план +${rub(add)}</span>`:""}</td><td>${mln(c.v+add)}</td></tr>`;
+    });
+    const sum = q.reduce((a,b)=>a+b,0);
+    $("catTable").innerHTML = rows.join("") + `<tr class="sum"><td>Итого на 2027 год</td><td>${mln(sum)}</td></tr>`;
+  }
+
+  function drawChart(q){
+    const svg = $("chartSvg");
+    const W=360, H=200, padL=8, padR=8, padT=26, padB=30;
+    const max = Math.ceil(Math.max(...q)/1e7)*1e7;
+    const plotH = H - padT - padB;
+    const slot = (W - padL - padR)/4;
+    const bw = Math.min(46, slot*0.5);
+    const labels = ["I кв.","II кв.","III кв.","IV кв."];
+    const peak = q.indexOf(Math.max(...q));
+    let g = `<desc id="chartDesc">Прогноз выплат по кварталам: ${q.map((v,i)=>labels[i]+" "+mln(v)+" млн").join(", ")}</desc>`;
+    // сетка
+    [0,0.5,1].forEach(f=>{
+      const y = padT + plotH*(1-f);
+      g += `<line x1="${padL}" x2="${W-padR}" y1="${y}" y2="${y}" stroke="#DCE5EE" stroke-width="1"/>`;
+      if(f>0) g += `<text x="${W-padR}" y="${y-4}" text-anchor="end" font-size="10" fill="#8797A8">${mln(max*f)}</text>`;
+    });
+    q.forEach((v,i)=>{
+      const h = Math.max(2, plotH * v/max);
+      const x = padL + slot*i + (slot-bw)/2;
+      const y = padT + plotH - h;
+      const r = Math.min(4, h/2);
+      // скругление только у верхнего края
+      g += `<path d="M${x},${y+h} V${y+r} Q${x},${y} ${x+r},${y} H${x+bw-r} Q${x+bw},${y} ${x+bw},${y+r} V${y+h} Z" fill="#1597D6"/>`;
+      if(i===peak) g += `<text x="${x+bw/2}" y="${y-7}" text-anchor="middle" font-size="12" font-weight="600" fill="#16283A">${mln(v)}</text>`;
+      g += `<text x="${x+bw/2}" y="${H-10}" text-anchor="middle" font-size="11.5" fill="#51647A">${labels[i]}</text>`;
+      // зона нажатия шире столбца
+      g += `<rect class="hit" data-i="${i}" x="${padL+slot*i}" y="${padT}" width="${slot}" height="${plotH}" fill="transparent" tabindex="0" role="button" aria-label="${labels[i]}: ${mln(v)} млн рублей"/>`;
+    });
+    svg.innerHTML = g;
+    svg._data = {q, labels, slot, padL, padT, plotH, max, W};
+  }
+
+  function showTip(i){
+    const svg = $("chartSvg"), d = svg._data, tip = $("tip");
+    const box = svg.getBoundingClientRect(), k = box.width / d.W;
+    const v = d.q[i];
+    const h = d.plotH * v / d.max;
+    tip.innerHTML = `<b>${d.labels[i]}</b> · ${mln(v)} млн ₽`;
+    tip.style.left = ((d.padL + d.slot*i + d.slot/2) * k) + "px";
+    tip.style.top = ((d.padT + d.plotH - h - 8) * k) + "px";
+    tip.hidden = false;
+  }
+  $("chartSvg").addEventListener("pointerover",(e)=>{ const r=e.target.closest(".hit"); if(r) showTip(+r.dataset.i); });
+  $("chartSvg").addEventListener("click",(e)=>{ const r=e.target.closest(".hit"); if(r) showTip(+r.dataset.i); });
+  $("chartSvg").addEventListener("focusin",(e)=>{ const r=e.target.closest(".hit"); if(r) showTip(+r.dataset.i); });
+  $("chartSvg").addEventListener("pointerleave",()=>{ $("tip").hidden = true; });
+
+  /* ---------- вкладки ---------- */
+  function openTab(name){
+    ["plan","osr","about"].forEach(t=>{
+      $("view-"+t).hidden = t!==name;
+      $("tab-"+t).setAttribute("aria-selected", String(t===name));
+    });
+    if(name==="osr") renderOsr();
+    window.scrollTo(0,0);
+  }
+  document.querySelector(".tabbar").addEventListener("click",(e)=>{
+    const b = e.target.closest("[data-tab]"); if(b) openTab(b.dataset.tab);
+  });
+
+  /* ---------- отправка ---------- */
+  $("submitBtn").addEventListener("click", ()=>{
+    recalc();
+    mine = JSON.parse(JSON.stringify(plan));
+    $("sheetList").innerHTML = plan.items.map(t=>`<li>${t}</li>`).join("");
+    $("sheet").hidden = false;
+    $("toOsr").focus();
+  });
+  $("sheetClose").addEventListener("click", ()=>{ $("sheet").hidden = true; });
+  $("toOsr").addEventListener("click", ()=>{ $("sheet").hidden = true; openTab("osr"); });
+  $("sheet").addEventListener("click",(e)=>{ if(e.target.id==="sheet") $("sheet").hidden = true; });
+
+  /* ---------- стартовое состояние: заполненный пример ---------- */
+  $("evBirth").checked = true; $("evBirthMore").hidden = false;
+  $("v1On").checked = true; $("v1More").hidden = false; $("v1").classList.add("on");
+  recalc();
+  renderOsr();
+  if(location.hash === "#osr") openTab("osr");
+  else if(location.hash === "#about") openTab("about");
+})();
+</script>
