@@ -458,12 +458,12 @@ button.cell:active,.cell.press:active{background:#EDF1F6}
 
 /* тост */
 .toast{
-  position:absolute;left:50%;top:calc(var(--sat) + 10px);z-index:40;transform:translate(-50%,-140%);
+  position:absolute;left:50%;top:calc(var(--sat) + 10px);z-index:40;transform:translate(-50%,calc(-100% - var(--sat) - 30px));opacity:0;
   background:rgba(15,34,51,.92);color:#fff;border-radius:999px;padding:10px 16px;font-size:14px;font-weight:600;
-  display:flex;align-items:center;gap:8px;white-space:nowrap;transition:transform .45s var(--ease);
+  display:flex;align-items:center;gap:8px;white-space:nowrap;transition:transform .45s var(--ease),opacity .3s;
   -webkit-backdrop-filter:blur(10px);backdrop-filter:blur(10px);
 }
-.toast.show{transform:translate(-50%,0)}
+.toast.show{transform:translate(-50%,0);opacity:1}
 .toast svg{width:18px;height:18px;color:#5BD48F}
 </style>
 </head>
@@ -840,7 +840,7 @@ button.cell:active,.cell.press:active{background:#EDF1F6}
     <ul>
       <li><span class="ico" style="background:#1597D6"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg></span><span><b>Три минуты в год</b><span>Отмечаете события — сумма считается сама</span></span></li>
       <li><span class="ico" style="background:#22A45D"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M8 20V4h5.5a4 4 0 0 1 0 8H6M6 16h8"/></svg></span><span><b>Деньги будут вовремя</b><span>Бюджет строится по реальным планам</span></span></li>
-      <li><span class="ico" style="background:#B35CE0"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></svg></span><span><b>Только для отдела социального развития</b><span>Руководитель и коллеги ответы не видят</span></span></li>
+      <li><span class="ico" style="background:#B35CE0"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></svg></span><span><b>Только для отдела</b><span>Руководитель и коллеги ответы не видят</span></span></li>
     </ul>
     <div class="go"><button class="btn" type="button" id="wGo">Начать</button><div class="demo">Концепт-прототип · демо-данные</div></div>
   </div>
@@ -887,9 +887,9 @@ const PLACES = [
   {name:"ОГК «Лазурная Отель и Спа»", where:"Сочи, побережье", color:"#1597D6"},
 ];
 const kids = [
-  {id:"k1", who:"Маша, 5 лет", cat:"sad", label:"Детский сад", scope:"на ребёнка", limit:93132, q:[21000,21000,15000,21000], color:"#FF6F91", ini:"М", form:"АФ/ОСР/ф.8-1"},
-  {id:"k2", who:"Артём, 11 лет", cat:"dop", label:"Допобразование: робототехника", scope:"на ребёнка", limit:31044, q:[7500,7500,0,7500], color:"#1597D6", ini:"А", form:"АФ/ОСР/ф.8"},
-  {id:"k3", who:"Вся семья", cat:"sport", label:"Спорт: бассейн, секции", scope:"на семью", limit:31044, q:[0,0,0,0], color:"#22A45D", ini:"С", form:"АФ/ОСР/ф.8-2"},
+  {id:"k1", who:"Маша, 5 лет", cat:"sad", label:"Детский сад", scope:"на ребёнка", limit:93132, q:[0,0,0,0], demo:[21000,21000,15000,21000], color:"#FF6F91", ini:"М", form:"АФ/ОСР/ф.8-1"},
+  {id:"k2", who:"Артём, 11 лет", cat:"dop", label:"Дополнительное образование", scope:"на ребёнка", limit:31044, q:[0,0,0,0], demo:[7500,7500,0,7500], color:"#1597D6", ini:"А", form:"АФ/ОСР/ф.8"},
+  {id:"k3", who:"Вся семья", cat:"sport", label:"Спорт, секции, бассейн", scope:"на семью", limit:31044, q:[0,0,0,0], color:"#22A45D", ini:"С", form:"АФ/ОСР/ф.8-2"},
 ];
 const CAMP = [
   {v:0, t:"Не поедет", s:"Место не бронируется"},
@@ -903,7 +903,8 @@ const DOC = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-w
 const PIN = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M12 21s-7-6.2-7-11.5a7 7 0 0 1 14 0C19 14.8 12 21 12 21z"/><circle cx="12" cy="9.5" r="2.5"/></svg>`;
 
 /* ---------- отпуска: компенсация один раз в год ---------- */
-let vacSel = "v1";
+const DEMO = location.hash==="#demo";
+let vacSel = DEMO ? "v1" : null;
 fillMonths($("vacRep"), 5);
 function renderVac(){
   $("vacList").innerHTML = vacations.map(v=>`
@@ -1119,7 +1120,7 @@ function renderHero(total,q,n){
     $("heroSum").innerHTML = Math.round(shown).toLocaleString("ru-RU")+" <small>₽</small>";
     if(p<1) raf=requestAnimationFrame(step); };
   raf=requestAnimationFrame(step);
-  $("heroMeta").textContent = n ? `Отмечено разделов: ${n} из 6` : "Отметьте, что планируете";
+  $("heroMeta").textContent = n ? `Отмечено разделов: ${n} из 6` : "Начните с любого раздела ниже";
   const max=Math.max(...q,1);
   if(!$("qbars").children.length) $("qbars").innerHTML=q.map((_,i)=>`<div class="qbar"><b id="qb${i}"></b><div class="col" id="qc${i}"></div><span>${QN[i]} кв.</span></div>`).join("");
   q.forEach((v,i)=>{ $("qb"+i).textContent = v? (v>=1e6? mln(v)+" млн" : Math.round(v/1000)+" тыс.") : "—";
@@ -1189,7 +1190,7 @@ $("submitBtn").addEventListener("click",()=>{
 $("toOsr").addEventListener("click",()=>{ closeSheets(); setTimeout(()=>openTab("osr"),200); });
 
 /* ---------- сводка ---------- */
-const BASE={respondents:943,staff:2357,births:37,trips:212,camp:164,
+const BASE={respondents:1243,staff:1912,births:37,trips:212,camp:164,
   q:[18.4e6,41.7e6,63.2e6,27.9e6],
   cats:[
     {key:"travel",name:"Проезд к месту отпуска",v:58.3e6},
@@ -1224,7 +1225,7 @@ function renderOsr(animate){
     + `<div class="cat total"><span>Итого на 2027 год</span><b class="num">${mln(sum)} млн</b></div>`;
   const LOAD=[38,41,57,96,143,188,171,119,72,64,58,49], lmax=Math.max(...LOAD), lpk=LOAD.indexOf(lmax);
   $("load").innerHTML = LOAD.map((v,i)=>`<div><i class="${i===lpk?"pk":""}" style="height:${Math.round(v/lmax*84)}px;transition-delay:${i*35}ms"></i>${i===lpk?`<b style="bottom:${Math.round(v/lmax*84)+22}px">${v}</b>`:""}<span>${MON3[i]}</span></div>`).join("");
-  $("loadInsight").textContent = `Пик — ${MONTHS[lpk]}: около ${lmax} обращений. Отдел заранее усилит приём в мае–июле и распределит проверку заявлений.`;
+  $("loadInsight").textContent = `Пик — ${MONTHS[lpk]}: около ${lmax} обращений. Отдел заранее усилит приём в мае–июле и распределит проверку авансовых отчётов.`;
   if(animate){
     $("load").classList.remove("shown");
     ch.classList.remove("shown");
@@ -1293,7 +1294,7 @@ renderVac();
 document.addEventListener("input",(e)=>{ if(e.target.closest(".stage")) recalc(); });
 document.addEventListener("change",(e)=>{ if(e.target.closest(".stage")) recalc(); });
 
-$("evBirth").checked=true; $("evBirthMore").classList.add("open");
+if(DEMO){ $("evBirth").checked=true; $("evBirthMore").classList.add("open"); kids.forEach(k=>k.demo&&k.demo.forEach((v,i)=>{ $(k.id+"q"+i).value = v? v.toLocaleString("ru-RU") : ""; })); }
 
 recalc();
 renderOsr(false);
