@@ -2650,7 +2650,7 @@ const Views = (function(){
 
           <div class="buttons">
             <button class="generate-btn" onclick="generatePackage()">Сформировать пакет согласий</button>
-            <button id="printBtn" class="print-btn hidden" onclick="window.print()">Печать / PDF</button>
+            <button id="printBtn" class="print-btn hidden" onclick="dwPrintConsents()">Печать / PDF</button>
             <button class="clear-btn" onclick="clearForm()">Очистить</button>
           </div>
           <div class="footer">Отдел социального развития · Сургутский ЗСК</div>
@@ -6491,5 +6491,298 @@ window.Avans = {
 })();
 </script>
 <!-- ===================== /ДЕМО-ОБОЛОЧКА ===================== -->
+
+<!-- ===================== ДЕМО: примеры заполнения и печать ===================== -->
+<style>
+#dwPrintRoot{display:none}
+@media print{
+  .dw-ribbon,.dw-tabbar,.dw-welcome,.dw-hint,.dw-toast{display:none!important}
+  body{padding-bottom:0!important}
+  body.dw-printing > *:not(#dwPrintRoot){display:none!important}
+  body.dw-printing #dwPrintRoot{display:block!important}
+  #dwPrintRoot .preview{zoom:1!important;width:auto!important;min-height:0!important;padding:0!important;margin:0!important;box-shadow:none!important;border:0!important}
+  #dwPrintRoot .doc{break-after:page;page-break-after:always}
+  #dwPrintRoot .doc:last-child{break-after:auto;page-break-after:auto}
+  .master-embed .preview{zoom:1!important}
+}
+.dw-hint .chips button{display:inline-flex;align-items:center;gap:6px}
+.dw-hint .chips button svg{width:15px;height:15px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;flex:none}
+.dw-hint.busy{opacity:.6;pointer-events:none}
+.dw-toast{position:fixed;left:50%;bottom:calc(86px + env(safe-area-inset-bottom,0px));transform:translate(-50%,20px);opacity:0;z-index:960;background:#13233A;color:#fff;font-size:13.5px;font-weight:600;padding:11px 16px;border-radius:12px;box-shadow:0 10px 28px rgba(0,0,0,.25);transition:opacity .25s,transform .25s;pointer-events:none;max-width:calc(100vw - 32px);text-align:center}
+.dw-toast.show{opacity:1;transform:translate(-50%,0)}
+@media(min-width:761px){.dw-toast{bottom:28px}}
+.dw-flash{animation:dwFlash 1.2s ease}
+@keyframes dwFlash{0%{box-shadow:0 0 0 0 rgba(21,151,214,.0)}25%{box-shadow:0 0 0 4px rgba(21,151,214,.35)}100%{box-shadow:0 0 0 0 rgba(21,151,214,0)}}
+</style>
+<div id="dwPrintRoot" class="master-embed"></div>
+<div class="dw-toast" id="dwToast" role="status"></div>
+<script>
+(function(){
+  function wait(ms){ return new Promise(function(r){ setTimeout(r,ms); }); }
+  function $(id){ return document.getElementById(id); }
+  function toast(t){ var el=$('dwToast'); el.textContent=t; el.classList.add('show'); clearTimeout(toast._t); toast._t=setTimeout(function(){ el.classList.remove('show'); },2600); }
+  window.dwToast=toast;
+  function setv(el,v){ if(typeof el==='string') el=$(el); if(!el) return; el.value=v; el.dispatchEvent(new Event('input',{bubbles:true})); el.dispatchEvent(new Event('change',{bubbles:true})); }
+  var ICO_WAND='<svg viewBox="0 0 24 24"><path d="M15 4V2M15 16v-2M8 9h2M20 9h2M17.8 11.8 19 13M17.8 6.2 19 5M3 21l9-9M12.2 6.2 11 5"/></svg>';
+
+  /* ---------- печать согласий: только листы, без интерфейса ---------- */
+  window.dwPrintConsents=function(){
+    var src=$('preview'); if(!src || !src.querySelector('.doc')){ toast('Сначала сформируйте пакет согласий'); return; }
+    var root=$('dwPrintRoot');
+    root.innerHTML='<div class="preview"></div>';
+    root.firstChild.innerHTML=src.innerHTML;
+    document.body.classList.add('dw-printing');
+    setTimeout(function(){ window.print(); },30);
+  };
+  window.addEventListener('afterprint',function(){
+    if(document.body.classList.contains('dw-printing')){ document.body.classList.remove('dw-printing'); $('dwPrintRoot').innerHTML=''; }
+  });
+
+  /* ---------- мастер согласий: примеры ---------- */
+  var W={fio:'Иванов Иван Иванович',s:'6712',n:'123456',by:'ОУФМС России по ХМАО-Югре в г. Сургуте',d:'2015-06-15',a:'ХМАО-Югра, г. Сургут, ул. Ленина, д. 1, кв. 1'};
+  function fillWorker(){ setv('fio',W.fio); setv('workerSeries',W.s); setv('workerNumber',W.n); setv('workerIssued',W.by); setv('workerIssueDate',W.d); setv('workerAddress',W.a); }
+  function fillChild(i,c){
+    setv('childFio'+i,c.fio); setv('childBirth'+i,c.b); if(typeof checkAge==='function') checkAge(i);
+    setv('childRelation'+i,'отцом'); setv('childSeries'+i,c.s); setv('childNumber'+i,c.n);
+    setv('childIssued'+i,c.by); setv('childIssueDate'+i,c.d); setv('childAddress'+i,W.a);
+  }
+  async function consentsDemo(kind){
+    var b=$('benefit'); if(!b) return;
+    if(kind==='vacation'){
+      b.value='vacation'; handleBenefit(); await wait(120);
+      setv('vacationMembers','family'); await wait(120);
+      setv('childrenCount','1'); renderChildren(); await wait(60);
+      fillWorker();
+      setv('wifeFio','Иванова Мария Петровна'); setv('wifeSeries','6713'); setv('wifeNumber','654321');
+      setv('wifeIssued','ОУФМС России по ХМАО-Югре в г. Сургуте'); setv('wifeIssueDate','2011-03-20'); setv('wifeAddress',W.a);
+      fillChild(1,{fio:'Иванов Пётр Иванович',b:'2015-09-05',s:'II-ПН',n:'123456',by:'Отдел ЗАГС г. Сургута',d:'2015-09-10'});
+    }else{
+      b.value='kindergarten'; handleBenefit(); await wait(120);
+      setv('contractPerson','worker');
+      setv('childrenCount','2'); renderChildren(); await wait(60);
+      fillWorker();
+      fillChild(1,{fio:'Иванов Пётр Иванович',b:'2021-04-12',s:'III-ПН',n:'234567',by:'Отдел ЗАГС г. Сургута',d:'2021-04-20'});
+      fillChild(2,{fio:'Иванова Анна Ивановна',b:'2022-11-03',s:'III-ПН',n:'345678',by:'Отдел ЗАГС г. Сургута',d:'2022-11-10'});
+    }
+    await wait(150);
+    generatePackage(); await wait(250);
+    var pv=$('preview'); var n=pv?pv.querySelectorAll('.doc').length:0;
+    toast('Готово: сформировано согласий — '+n);
+    var target=window.matchMedia('(max-width:900px)').matches ? (document.querySelector('.dw-pvhead')||pv) : $('printBtn');
+    if(target){ var y=target.getBoundingClientRect().top+window.scrollY-84; window.scrollTo({top:y,behavior:'smooth'}); }
+    if(pv){ pv.classList.remove('dw-flash'); void pv.offsetWidth; pv.classList.add('dw-flash'); }
+  }
+
+  /* ---------- авансовый отчёт: пример целиком ---------- */
+  async function avansDemo(){
+    if(!window.Avans) return;
+    var oc=window.confirm; window.confirm=function(){ return true; };
+    try{
+      Avans.goStep(1); await wait(200);
+      var btns; while((btns=document.querySelectorAll('#famList .btn-danger-text')).length){ btns[0].click(); await wait(20); }
+      var emp=[['e_fio','Иванов Иван Иванович'],['e_pos','Слесарь по ремонту технологических установок'],['e_dept','Цех № 1'],['e_tab','123123'],
+               ['e_phone','+7 999 123-45-67'],['e_addr','ХМАО-Югра, г. Сургут, ул. Ленина, д. 1, кв. 1'],['e_ps','6712'],['e_pn','123456'],
+               ['e_pd','15.06.2015'],['e_pb','ОУФМС России по ХМАО-Югре в г. Сургуте']];
+      for(var i=0;i<emp.length;i++){ setv(emp[i][0],emp[i][1]); }
+      await wait(450);
+      Avans.setTransport('avia_rf'); Avans.setPay && Avans.setPay('self');
+      Avans.goStep(2); await wait(550);
+      Avans.goStep(3); await wait(300);
+      var fam=[{fio:'Иванова Мария Петровна',g:'F',b:'12.03.1990',s:'6713',n:'654321',d:'20.03.2011',by:'ОУФМС России по ХМАО-Югре в г. Сургуте'},
+               {fio:'Иванов Пётр Иванович',g:'M',b:'05.09.2015',s:'II-ПН',n:'123456',d:'10.09.2015',by:'Отдел ЗАГС г. Сургута'}];
+      for(var k=0;k<fam.length;k++){
+        Avans.addFamilyMember(); await wait(60);
+        var card=document.querySelectorAll('#famList > .fm-card')[k];
+        var ins=card.querySelectorAll('input[type=text]'), sel=card.querySelectorAll('select');
+        setv(ins[0],fam[k].fio); setv(sel[1],fam[k].g); setv(ins[1],fam[k].b);
+        card=document.querySelectorAll('#famList > .fm-card')[k]; ins=card.querySelectorAll('input[type=text]');
+        setv(ins[2],fam[k].s); setv(ins[3],fam[k].n); setv(ins[4],fam[k].d); setv(ins[5],fam[k].by);
+      }
+      await wait(500);
+      Avans.goStep(4); await wait(150);
+      [].forEach.call(document.querySelectorAll('#expenseGroups tbody tr'),function(tr,ri){
+        var ins=tr.querySelectorAll('input'); if(ins.length<4) return;
+        var nm=ins[2].value||'';
+        var back=/обратно/i.test(nm);
+        setv(ins[0], back?'26.07.2027':'12.07.2027');
+        if(/чек/i.test(nm)){ setv(ins[1],(back?'Ч-':'Ч-')+(1001+ri)); setv(ins[3], back?'11 800,00':'12 400,00'); }
+        else setv(ins[1],(/талон/i.test(nm)?'ПТ-':'ЭБ-')+(2001+ri));
+      });
+      await wait(650);
+      Avans.goStep(5); await wait(450);
+      var p5=document.querySelector('[data-step-panel="5"]'); if(p5){ window.scrollTo({top:p5.getBoundingClientRect().top+window.scrollY-(window.matchMedia('(max-width:760px)').matches?150:90),behavior:'smooth'}); }
+      toast('Пример заполнен — комплект документов готов');
+    } finally { window.confirm=oc; }
+  }
+
+  /* ---------- подсказки ---------- */
+  function hintCard(text, chips){
+    return '<div class="dw-hint">'+text+'<div class="chips">'+chips.map(function(c){ return '<button type="button" data-demo="'+c[0]+'">'+ICO_WAND+c[1]+'</button>'; }).join('')+'</div></div>';
+  }
+  function bind(h, fn){
+    h.addEventListener('click',async function(e){
+      var b=e.target.closest('button[data-demo]'); if(!b) return;
+      h.classList.add('busy'); try{ await fn(b.getAttribute('data-demo')); } finally { h.classList.remove('busy'); }
+    });
+  }
+  function addHints2(){
+    var panel=document.querySelector('.master-embed:not(#dwPrintRoot) .panel');
+    if(panel && !panel.querySelector('.dw-hint')){
+      var t=panel.querySelector('.title');
+      t.insertAdjacentHTML('afterend', hintCard('<b>Как попробовать:</b> выберите пример — мастер сам подберёт нужные формы и заполнит их.',
+        [['vacation','Путёвка: работник, жена, сын'],['kindergarten','Детский сад: двое детей']]));
+      bind(panel.querySelector('.dw-hint'), consentsDemo);
+    }
+    var pb=$('printBtn'); if(pb && pb.getAttribute('onclick')!=='dwPrintConsents()') pb.setAttribute('onclick','dwPrintConsents()');
+    var lay=document.querySelector('.avans-embed .layout');
+    if(lay && !document.querySelector('.avans-embed .dw-hint')){
+      lay.insertAdjacentHTML('beforebegin', hintCard('<b>Как попробовать:</b> нажмите — мастер пройдёт все 5 шагов на примере (работник с женой и сыном, перелёт по России) и подготовит комплект документов.',
+        [['avans','Заполнить пример']]));
+      bind(document.querySelector('.avans-embed .dw-hint'), avansDemo);
+    }
+  }
+  var mount=$('mainContent'), pend=false;
+  new MutationObserver(function(){ if(pend) return; pend=true; requestAnimationFrame(function(){ pend=false; addHints2(); }); }).observe(mount,{childList:true,subtree:true});
+})();
+</script>
+<!-- ===================== /ДЕМО: примеры и печать ===================== -->
+
+<!-- ===================== ДЕМО: шлифовка под телефон ===================== -->
+<style>
+.avans-embed .btn-danger-text{border:0!important;outline:0}
+.dw-pvbar{display:none;align-items:center;justify-content:space-between;gap:12px;margin:0 0 12px;padding:12px 14px;border-radius:14px;background:#E9F7EF;border:1px solid #BFE5CD;color:#11502D;font-size:13.5px;font-weight:600}
+.dw-pvbar.on{display:flex}
+.dw-pvbar button{border:0;border-radius:10px;background:#1E9E5A;color:#fff;font-family:inherit;font-weight:700;font-size:13.5px;padding:10px 14px;cursor:pointer;display:inline-flex;align-items:center;gap:7px;white-space:nowrap}
+.dw-pvbar button svg{width:16px;height:16px;stroke:#fff;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.master-embed .preview-col{min-width:0}
+.dw-pvlabel{display:none;font-size:12px;color:#6B7A8C;margin:0 0 8px;text-align:center}
+
+@media(max-width:760px){
+  /* шапка: место под поиск, лента «ДЕМО» не закрывает поле */
+  #homeBtn{display:none!important}
+  .topbar{padding-right:46px!important}
+  .main{padding-left:14px!important;padding-right:14px!important}
+  .section-head h2{font-size:21px!important;line-height:1.25}
+  .section-head p{font-size:13px}
+  .breadcrumb,.crumbs{font-size:12px}
+
+  /* главная: компактные плитки жизненных ситуаций, 2 в ряд */
+  .grid:has(> .situ-card){grid-template-columns:1fr 1fr!important;gap:10px!important}
+  .situ-card{padding:14px!important;min-height:0!important;gap:10px!important;border-radius:16px!important}
+  .situ-card::after{display:none}
+  .situ-card .situ-ic{width:40px;height:40px;border-radius:12px}
+  .situ-card .situ-ic svg{width:20px;height:20px}
+  .situ-card h3{font-size:14px!important;line-height:1.3}
+  .situ-card p,.situ-card .situ-meta{display:none!important}
+  .help-list li{flex-wrap:wrap;row-gap:2px}
+  .help-list li a{white-space:nowrap}
+  .situ-header{flex-direction:column;align-items:flex-start!important;gap:12px!important}
+  .situ-header h1{font-size:21px!important}
+  .situ-header-actions{margin-left:0!important}
+
+  .reestr-embed .card{padding:18px 16px!important;border-radius:18px!important}
+  .reestr-embed input{font-size:16px!important}
+  /* мастер согласий */
+  .master-embed{gap:14px!important}
+  .master-embed .panel{padding:18px 16px!important;border-radius:18px!important}
+  .master-embed .title{font-size:17px!important;margin-bottom:12px!important}
+  .master-embed input,.master-embed select,.master-embed textarea{font-size:16px!important}
+  .master-embed .row{gap:8px!important}
+  .master-embed .preview{box-shadow:0 2px 14px rgba(15,40,80,.10)!important;border-radius:6px}
+  .dw-pvlabel{display:block}
+  .master-embed .preview:not(:has(.doc)){min-height:0!important;padding:26px 16px!important;zoom:1!important;width:auto!important}
+  .master-embed .preview:not(:has(.doc)) .empty{margin:0!important;font-size:14px}
+  .master-embed .preview-col:not(:has(.doc)) .dw-pvlabel{display:none}
+
+  /* авансовый отчёт */
+  .avans-embed .shell{padding:0!important}
+  .avans-embed .hero{padding:20px 18px!important;border-radius:18px!important;margin-bottom:14px!important}
+  .avans-embed .hero h1{font-size:19px!important;line-height:1.25!important;margin-bottom:6px!important}
+  .avans-embed .hero p{font-size:13px!important;line-height:1.5!important}
+  .avans-embed .hero-decor{width:150px!important;height:150px!important;border-width:22px!important}
+  .avans-embed .layout{gap:14px!important}
+  /* шаги — компактная полоса */
+  .avans-embed .stepper{display:grid!important;grid-template-columns:repeat(5,1fr);gap:4px;padding:8px!important;position:sticky!important;top:70px;z-index:20;box-shadow:0 6px 18px rgba(15,40,80,.08)!important}
+  .avans-embed .step-item{flex-direction:column;align-items:center!important;text-align:center;gap:4px!important;padding:6px 2px!important;border-radius:10px}
+  .avans-embed .step-item .step-desc,.avans-embed .step-item .lock-ic{display:none!important}
+  .avans-embed .step-label{font-size:10.5px!important;line-height:1.15}
+  .avans-embed .step-num{width:26px!important;height:26px!important}
+  .avans-embed .panel{padding:18px 14px!important;border-radius:18px!important}
+  .avans-embed .panel-head h2{font-size:19px!important}
+  .avans-embed .panel-hint{font-size:13px!important;line-height:1.5!important}
+  .avans-embed input,.avans-embed select,.avans-embed textarea{font-size:16px!important}
+  /* поля по два в ряд, где они короткие */
+  .avans-embed [data-step-panel="1"] .grid2{grid-template-columns:1fr 1fr!important}
+  .avans-embed [data-step-panel="1"] .grid2 > .field:nth-child(-n+3){grid-column:1/-1}
+  .avans-embed .grid4{grid-template-columns:1fr 1fr!important}
+  .avans-embed .grid4 > .field:nth-child(4){grid-column:1/-1}
+  .avans-embed .fm-card{padding:14px 12px!important}
+  .avans-embed .fm-card .grid3{grid-template-columns:1fr 1fr!important;gap:10px 10px!important}
+  .avans-embed .fm-card .grid3 > .field:nth-child(1),
+  .avans-embed .fm-card .grid3 > .field:nth-child(4),
+  .avans-embed .fm-card .grid3 > .field:nth-child(5),
+  .avans-embed .fm-card .grid3 > .field:nth-child(8),
+  .avans-embed .fm-card .grid3 > .field:nth-child(9){grid-column:1/-1}
+  .avans-embed .fm-card .grid3 > .field:nth-child(4){grid-column:auto}
+  .avans-embed .fm-card .grid3 > .field:nth-child(8){grid-column:auto}
+  .avans-embed .fm-card-head{flex-wrap:wrap;row-gap:6px}
+  /* расходы — карточками вместо таблицы */
+  .avans-embed .exp-table-wrap{overflow:visible!important}
+  .avans-embed .exp-table{min-width:0!important;table-layout:auto!important;display:block}
+  .avans-embed .exp-table thead{display:none}
+  .avans-embed .exp-table tbody{display:block}
+  .avans-embed .exp-table tr{display:grid;grid-template-columns:1.15fr 1fr 1fr;gap:8px 8px;padding:12px 0;border-bottom:1px solid var(--border);position:relative}
+  .avans-embed .exp-table td{display:block;padding:0!important;border:0!important;overflow:visible!important;min-width:0}
+  .avans-embed .exp-table td.name-cell{grid-column:1/-1;grid-row:1;padding-right:72px!important}
+  .avans-embed .exp-table td:nth-child(1){grid-column:1;grid-row:2}
+  .avans-embed .exp-table td:nth-child(2){grid-column:2;grid-row:2}
+  .avans-embed .exp-table td:nth-child(4){grid-column:3;grid-row:2}
+  .avans-embed .exp-table td.del-col{position:absolute;right:0;top:30px;display:flex;gap:4px;width:auto!important}
+  .avans-embed .exp-table td::before{display:block;font-size:10.5px;font-weight:700;color:var(--text-2);text-transform:uppercase;letter-spacing:.04em;margin:0 0 4px}
+  .avans-embed .exp-table td:nth-child(1)::before{content:"Дата"}
+  .avans-embed .exp-table td:nth-child(2)::before{content:"№ документа"}
+  .avans-embed .exp-table td.name-cell::before{content:"Документ"}
+  .avans-embed .exp-table td:nth-child(4)::before{content:"Сумма, ₽"}
+  .avans-embed .exp-table td.del-col::before{content:none}
+  .avans-embed .exp-table input{padding:9px 8px!important;font-size:14px!important}
+  .avans-embed .exp-table td:nth-child(4) input{font-weight:700;text-align:right}
+  /* итог */
+  .avans-embed .doc-card{flex-wrap:wrap;padding:14px!important;gap:10px 12px!important}
+  .avans-embed .doc-card .grow{flex:1 1 calc(100% - 60px)}
+  .avans-embed .doc-card .print-btn-row{width:100%}
+  .avans-embed .doc-card .print-btn-row .btn{width:100%;justify-content:center}
+  .avans-embed [data-step-panel="5"] .btn-primary{width:100%;justify-content:center}
+  .avans-embed .sum-hero .big{font-size:30px!important}
+  /* кнопки «Назад / Далее» */
+  .avans-embed .panel-foot,.avans-embed .nav-row{gap:10px}
+}
+@media(max-width:360px){
+  .grid:has(> .situ-card){grid-template-columns:1fr!important}
+}
+@media print{ .dw-pvbar,.dw-pvlabel{display:none!important} }
+</style>
+<script>
+(function(){
+  var PRN='<svg viewBox="0 0 24 24"><path d="M6 9V3h12v6"/><rect x="4" y="9" width="16" height="8" rx="2"/><path d="M7 14h10v7H7z"/></svg>';
+  function ensureBar(){
+    var pv=document.querySelector('.master-embed:not(#dwPrintRoot) #preview'); if(!pv) return;
+    var wrap=pv.parentElement;
+    if(!wrap.previousElementSibling || !wrap.previousElementSibling.classList || !wrap.previousElementSibling.classList.contains('dw-pvhead')){
+      var head=document.createElement('div'); head.className='dw-pvhead';
+      head.innerHTML='<div class="dw-pvbar"><span id="dwPvCount"></span><button type="button" onclick="dwPrintConsents()">'+PRN+'Печать / PDF</button></div><div class="dw-pvlabel">Предпросмотр — текст можно поправить прямо на листе</div>';
+      wrap.parentElement.insertBefore(head, wrap);
+      // колонка предпросмотра: шапка + лист
+      var col=document.createElement('div'); col.className='preview-col';
+      wrap.parentElement.insertBefore(col, head); col.appendChild(head); col.appendChild(wrap);
+    }
+    var n=pv.querySelectorAll('.doc').length;
+    var bar=document.querySelector('.dw-pvbar');
+    if(bar){ bar.classList.toggle('on', n>0); var c=document.getElementById('dwPvCount'); if(c) c.textContent='Готово: '+n+' '+(n===1?'согласие':(n>=2&&n<=4?'согласия':'согласий')); }
+  }
+  var mount=document.getElementById('mainContent'), pend=false;
+  new MutationObserver(function(){ if(pend) return; pend=true; requestAnimationFrame(function(){ pend=false; ensureBar(); }); }).observe(mount,{childList:true,subtree:true});
+})();
+</script>
+<!-- ===================== /ДЕМО: шлифовка ===================== -->
 </body>
 </html>
