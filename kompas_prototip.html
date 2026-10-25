@@ -1,0 +1,624 @@
+<title>Проектный компас</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=PT+Sans:ital,wght@0,400;0,700;1,400&family=PT+Serif:wght@700&display=swap">
+<style>
+/* Приборная панель проверки документа: одна колонка, липкая шапка, сводка, вкладки */
+:root{
+  --bg:#EEF2F6;
+  --surface:#FFFFFF;
+  --surface-2:#F6F9FB;
+  --ink:#121E28;
+  --muted:#5D6E7C;
+  --hair:#D4DEE6;
+  --brand:#0079C2;
+  --brand-deep:#00345F;
+  --crit:#BE3A2B;
+  --crit-bg:#FBE8E5;
+  --major:#A86200;
+  --major-bg:#FBEFD9;
+  --minor:#53499B;
+  --minor-bg:#EBE9F7;
+  --ok:#1B6B4D;
+  --ok-bg:#E2F1EA;
+  --font-display:"PT Serif",Georgia,serif;
+  --font-ui:"PT Sans","Segoe UI",system-ui,sans-serif;
+  color-scheme:light;
+}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){
+    --bg:#0E161D;
+    --surface:#16222C;
+    --surface-2:#1B2A36;
+    --ink:#E8EEF3;
+    --muted:#9DB0BE;
+    --hair:#2B3C4A;
+    --brand:#4FA8E0;
+    --brand-deep:#8FC4E8;
+    --crit:#F08C7C;
+    --crit-bg:#3A1F1B;
+    --major:#E3AC56;
+    --major-bg:#352814;
+    --minor:#A79BE8;
+    --minor-bg:#262243;
+    --ok:#6FC79F;
+    --ok-bg:#153229;
+    color-scheme:dark;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#0E161D;
+  --surface:#16222C;
+  --surface-2:#1B2A36;
+  --ink:#E8EEF3;
+  --muted:#9DB0BE;
+  --hair:#2B3C4A;
+  --brand:#4FA8E0;
+  --brand-deep:#8FC4E8;
+  --crit:#F08C7C;
+  --crit-bg:#3A1F1B;
+  --major:#E3AC56;
+  --major-bg:#352814;
+  --minor:#A79BE8;
+  --minor-bg:#262243;
+  --ok:#6FC79F;
+  --ok-bg:#153229;
+  color-scheme:dark;
+}
+
+*{box-sizing:border-box}
+body{
+  margin:0;background:var(--bg);color:var(--ink);
+  font-family:var(--font-ui);font-size:15px;line-height:1.5;
+  -webkit-text-size-adjust:100%;
+}
+body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:10;background:var(--brand-deep)}
+.wrap{max-width:760px;margin:0 auto;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:0 40px}
+
+header.top{
+  position:sticky;top:env(safe-area-inset-top,0px);z-index:9;
+  background:var(--brand-deep);color:#fff;
+  margin-left:calc(-1 * max(16px,env(safe-area-inset-left,0px)));
+  margin-right:calc(-1 * max(16px,env(safe-area-inset-right,0px)));
+  padding-left:max(16px,env(safe-area-inset-left,0px));
+  padding-right:max(16px,env(safe-area-inset-right,0px));
+  padding-block:13px 12px;
+  border-bottom:3px solid var(--brand);
+}
+header.top h1{font-family:var(--font-display);font-size:19px;margin:0;letter-spacing:.01em}
+header.top p{margin:3px 0 0;font-size:12.5px;color:#B6D2E6;line-height:1.35}
+
+.deck{display:flex;gap:8px;flex-wrap:wrap;margin-block:16px 0}
+.deck button{
+  flex:1 1 auto;min-width:0;
+  font-family:inherit;font-size:13.5px;font-weight:700;cursor:pointer;
+  padding:11px 12px;border-radius:3px;border:1px solid var(--hair);
+  background:var(--surface);color:var(--ink);
+}
+.deck button[aria-pressed="true"]{background:var(--brand-deep);border-color:var(--brand-deep);color:#fff}
+.deck button:hover:not([aria-pressed="true"]){border-color:var(--brand);color:var(--brand)}
+
+.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-top:14px}
+@media (max-width:560px){.stats{grid-template-columns:repeat(2,1fr)}}
+.stat{background:var(--surface);border:1px solid var(--hair);border-radius:3px;padding:10px 11px}
+.stat .k{font-size:11.5px;color:var(--muted);line-height:1.25}
+.stat .v{font-size:25px;font-weight:700;line-height:1.1;margin-top:3px;font-variant-numeric:tabular-nums}
+.stat.lead{background:var(--brand-deep);border-color:var(--brand-deep)}
+.stat.lead .k{color:#A9C8DF}
+.stat.lead .v{color:#fff}
+.stat .meter{height:4px;background:rgba(255,255,255,.22);border-radius:2px;margin-top:7px;overflow:hidden}
+.stat .meter i{display:block;height:100%;background:#fff;border-radius:2px;transition:width .45s ease}
+.stat.c .v{color:var(--crit)}
+
+nav.tabs{display:flex;gap:2px;margin-top:16px;border-bottom:2px solid var(--hair)}
+nav.tabs button{
+  flex:1;font-family:inherit;font-size:13.5px;cursor:pointer;
+  background:none;border:none;border-bottom:3px solid transparent;
+  margin-bottom:-2px;padding:9px 4px;color:var(--muted);
+}
+nav.tabs button[aria-selected="true"]{color:var(--ink);font-weight:700;border-bottom-color:var(--brand)}
+
+.panel{padding-top:14px}
+
+.filters{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:12px}
+.chip{
+  font-family:inherit;font-size:12px;cursor:pointer;
+  padding:5px 10px;border-radius:14px;border:1px solid var(--hair);
+  background:var(--surface);color:var(--muted);
+}
+.chip[aria-pressed="true"]{background:var(--brand-deep);border-color:var(--brand-deep);color:#fff;font-weight:700}
+
+.find{
+  background:var(--surface);border:1px solid var(--hair);border-radius:3px;
+  padding:12px 13px 13px;margin-bottom:9px;
+  border-left:4px solid var(--muted);
+  width:100%;text-align:left;font-family:inherit;display:block;color:inherit;
+}
+button.find{cursor:pointer}
+.find.crit{border-left-color:var(--crit)}
+.find.major{border-left-color:var(--major)}
+.find.minor{border-left-color:var(--minor)}
+.find.ok{border-left-color:var(--ok)}
+.find .line1{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:5px}
+.find .what,.find .fix,.find .ref,.find .quote,.find .tap{display:block}
+.sev{font-size:10.5px;font-weight:700;padding:2px 7px;border-radius:2px;letter-spacing:.02em}
+.crit .sev{background:var(--crit-bg);color:var(--crit)}
+.major .sev{background:var(--major-bg);color:var(--major)}
+.minor .sev{background:var(--minor-bg);color:var(--minor)}
+.ok .sev{background:var(--ok-bg);color:var(--ok)}
+.find .kind{font-size:12.5px;font-weight:700}
+.find .what{font-size:14.5px;line-height:1.45}
+.find .fix{margin-top:8px;font-size:13px;background:var(--surface-2);border-left:3px solid var(--brand);padding:7px 10px;border-radius:0 2px 2px 0}
+.find .ref{margin-top:7px;font-size:12.5px;color:var(--brand);font-weight:700}
+.find .quote{margin-top:7px;font-size:13px;color:var(--muted);font-style:italic;border-left:2px solid var(--hair);padding-left:9px}
+.find .tap{margin-top:7px;font-size:11.5px;color:var(--muted)}
+
+#docBox{
+  background:var(--surface);border:1px solid var(--hair);border-radius:3px;
+  padding:13px;font-size:14px;line-height:1.72;white-space:pre-wrap;
+  overflow-wrap:break-word;
+}
+#docBox mark{background:var(--major-bg);color:inherit;padding:1px 2px;border-radius:2px;box-shadow:inset 0 -2px 0 var(--major)}
+#docBox mark.crit{background:var(--crit-bg);box-shadow:inset 0 -2px 0 var(--crit)}
+#docBox mark.minor{background:var(--minor-bg);box-shadow:inset 0 -2px 0 var(--minor)}
+#docBox mark.on{outline:2px solid var(--brand);outline-offset:1px}
+textarea{
+  width:100%;min-height:230px;font-family:inherit;font-size:14px;line-height:1.6;
+  padding:12px;border:1px solid var(--hair);border-radius:3px;
+  background:var(--surface);color:var(--ink);resize:vertical;
+}
+.legend{display:flex;gap:12px;flex-wrap:wrap;margin-top:10px;font-size:11.5px;color:var(--muted)}
+.legend span{display:flex;align-items:center;gap:5px}
+.legend i{width:11px;height:11px;border-radius:2px;display:inline-block}
+
+.grp{border-bottom:1px solid var(--hair)}
+.grp:last-child{border-bottom:none}
+.grp>button{
+  width:100%;background:none;border:none;font-family:inherit;font-size:14px;color:inherit;
+  display:flex;align-items:center;gap:9px;padding:11px 2px;cursor:pointer;text-align:left;
+}
+.grp .nm{flex:1;font-weight:700}
+.grp .ct{font-size:12px;color:var(--muted);font-variant-numeric:tabular-nums}
+.grp .req{display:flex;gap:9px;padding:8px 0 8px 14px;border-top:1px solid var(--hair);font-size:13px}
+.grp .dot{width:8px;height:8px;border-radius:50%;background:var(--hair);flex:none;margin-top:5px}
+.grp .req.s-crit .dot{background:var(--crit)}
+.grp .req.s-major .dot{background:var(--major)}
+.grp .req.s-minor .dot{background:var(--minor)}
+.grp .req.s-ok .dot{background:var(--ok)}
+.grp .req .src{color:var(--brand);font-weight:700;font-size:12px}
+.grp .req .tx{color:var(--muted);display:block;margin-top:2px}
+
+.run{
+  width:100%;font-family:inherit;font-size:15px;font-weight:700;cursor:pointer;
+  padding:13px;border:none;border-radius:3px;background:var(--brand);color:#fff;margin-top:12px;
+}
+.run:hover{background:#0089DB}
+.note{font-size:13px;color:var(--muted);padding:16px 2px;line-height:1.5}
+footer.foot{
+  margin-top:22px;padding:12px 13px;background:var(--surface-2);
+  border-left:3px solid var(--brand);font-size:12.5px;color:var(--muted);line-height:1.55;
+}
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+:focus-visible{outline:2px solid var(--brand);outline-offset:2px}
+</style>
+
+<div class="wrap">
+  <header class="top">
+    <h1>Проектный компас</h1>
+    <p>Предварительная проверка технического задания на соответствие нормативным, корпоративным и проектным требованиям</p>
+  </header>
+
+  <div class="deck">
+    <button id="bBad" aria-pressed="true">ТЗ с недоработками</button>
+    <button id="bGood" aria-pressed="false">Проработанное ТЗ</button>
+    <button id="bOwn" aria-pressed="false">Своё задание</button>
+  </div>
+
+  <div class="stats" id="stats">
+    <div class="stat lead">
+      <div class="k">Полнота задания</div>
+      <div class="v" id="sPct">—</div>
+      <div class="meter"><i id="sBar" style="width:0"></i></div>
+    </div>
+    <div class="stat c">
+      <div class="k">Критичных</div>
+      <div class="v" id="sCrit">—</div>
+    </div>
+    <div class="stat">
+      <div class="k">Всего замечаний</div>
+      <div class="v" id="sAll">—</div>
+    </div>
+    <div class="stat">
+      <div class="k">Время проверки</div>
+      <div class="v" id="sTime">—</div>
+    </div>
+  </div>
+
+  <nav class="tabs" role="tablist">
+    <button role="tab" id="tabF" aria-selected="true" aria-controls="pF">Замечания</button>
+    <button role="tab" id="tabD" aria-selected="false" aria-controls="pD">Текст ТЗ</button>
+    <button role="tab" id="tabB" aria-selected="false" aria-controls="pB">База требований</button>
+  </nav>
+
+  <section class="panel" id="pF" role="tabpanel" aria-labelledby="tabF">
+    <div class="filters" id="filters"></div>
+    <div id="finds"></div>
+  </section>
+
+  <section class="panel" id="pD" role="tabpanel" aria-labelledby="tabD" hidden>
+    <div id="docBox"></div>
+    <textarea id="docEdit" hidden aria-label="Текст технического задания" placeholder="Вставьте текст технического задания"></textarea>
+    <button class="run" id="runBtn" hidden>Проверить задание</button>
+    <div class="legend" id="legend">
+      <span><i style="background:var(--crit-bg);box-shadow:inset 0 -2px 0 var(--crit)"></i>критично</span>
+      <span><i style="background:var(--major-bg);box-shadow:inset 0 -2px 0 var(--major)"></i>существенно</span>
+      <span><i style="background:var(--minor-bg);box-shadow:inset 0 -2px 0 var(--minor)"></i>замечание</span>
+    </div>
+  </section>
+
+  <section class="panel" id="pB" role="tabpanel" aria-labelledby="tabB" hidden>
+    <div id="groups"></div>
+  </section>
+
+  <footer class="foot">
+    Проверка выполняется на устройстве: текст задания не передаётся во внешние сервисы.
+    Система формирует замечания со ссылкой на источник — решение о внесении изменений принимает специалист.
+  </footer>
+</div>
+
+<script>
+var REQS = [
+  { id:"obj",  g:"Общие сведения", src:"ГОСТ 21.101-2020, п. 4.2",
+    txt:"Наименование объекта, место расположения и стадия проектирования.",
+    fix:"Добавить наименование объекта, площадку размещения и стадию проектирования." },
+  { id:"meas", g:"Общие сведения", src:"Регламент закупок, п. 5.3",
+    txt:"Требования измеримы и не допускают неоднозначного толкования.",
+    fix:"Заменить оценочные формулировки числовыми значениями с единицами измерения." },
+  { id:"temp", g:"Условия эксплуатации", src:"СТО Общества, п. 3.4",
+    txt:"Диапазон рабочих температур окружающего воздуха.",
+    fix:"Указать диапазон рабочих температур в градусах Цельсия." },
+  { id:"uhl",  g:"Условия эксплуатации", src:"ГОСТ 15150-69, п. 3.1",
+    txt:"Климатическое исполнение и категория размещения (например, УХЛ1).",
+    fix:"Добавить обозначение климатического исполнения по ГОСТ 15150-69." },
+  { id:"ip",   g:"Условия эксплуатации", src:"СТО Общества, п. 8.2",
+    txt:"Степень защиты оболочки по ГОСТ 14254 (код IP).",
+    fix:"Указать требуемую степень защиты оболочки в формате IPXX." },
+  { id:"ex",   g:"Промышленная безопасность", src:"СТО Общества, п. 3.7",
+    txt:"Уровень и вид взрывозащиты для оборудования во взрывоопасных зонах.",
+    fix:"Указать маркировку взрывозащиты, например Ex d IIB T4 Gb." },
+  { id:"life", g:"Промышленная безопасность", src:"ПБ, регламент п. 2.9",
+    txt:"Срок службы оборудования и межремонтный период.",
+    fix:"Добавить назначенный срок службы и межремонтный период с числовыми значениями." },
+  { id:"kit",  g:"Поставка и гарантии", src:"СТО Общества, п. 6.1",
+    txt:"Комплектность поставки, включая документацию на русском языке.",
+    fix:"Дополнить комплектность паспортом и руководством по эксплуатации на русском языке." },
+  { id:"warr", g:"Поставка и гарантии", src:"СТО Общества, п. 6.5",
+    txt:"Гарантийный срок и сервисное обслуживание на территории РФ.",
+    fix:"Указать гарантийный срок в месяцах и порядок сервисного обслуживания на территории РФ." }
+];
+
+var VAGUE = [
+  { re:/надёжн[а-яё]*|надежн[а-яё]*/i, why:"«надёжность» без числового критерия нельзя проверить при приёмке" },
+  { re:/длительн[а-яё]+\s+работ[а-яё]*/i, why:"«длительная работа» не имеет измеримого значения" },
+  { re:/люб[а-яё]+\s+(погодн[а-яё]+|услови[а-яё]+)/i, why:"«любые условия» не ограничены диапазоном" },
+  { re:/в\s+пределах\s+действующих\s+[а-яё]+\s*норм/i, why:"ссылка на «действующие нормы» без документа и значения" },
+  { re:/по\s+возможности|при\s+необходимости/i, why:"условная формулировка допускает произвольное толкование" },
+  { re:/современн[а-яё]+|качественн[а-яё]+|оптимальн[а-яё]+/i, why:"оценочная характеристика без измеримого критерия" },
+  { re:/достаточн[а-яё]+/i, why:"«достаточный» не задаёт проверяемой границы" }
+];
+
+function lineOf(t, re){
+  var ls = t.split("\n");
+  for (var i=0;i<ls.length;i++){ if (re.test(ls[i])) return ls[i].trim(); }
+  return "";
+}
+function has(t, re){ return re.test(t); }
+
+var CHECKS = {
+  obj:function(t){
+    var o = has(t,/объект\s*:|наименование объекта|для\s+(установки|площадки|объекта)/i);
+    var st = has(t,/стади[а-яё]+/i);
+    if (o && st) return { kind:"covered", quote:lineOf(t,/стади[а-яё]+/i) };
+    return { kind:"missing", what: o
+      ? "В задании не указана стадия проектирования."
+      : "Не указаны наименование объекта, место расположения и стадия проектирования." };
+  },
+  meas:function(t){
+    var hits = [];
+    VAGUE.forEach(function(v){ var l = lineOf(t, v.re); if (l) hits.push({ line:l, why:v.why }); });
+    if (!hits.length) return { kind:"covered", quote:"" };
+    return { multi:hits };
+  },
+  temp:function(t){
+    var re = /от\s*(минус|[-−])?\s*\d+\s*(до|\.\.\.|…)\s*(плюс|\+)?\s*\d+\s*°?\s*[CС]|температур[а-яё]*[^.\n]*\d+\s*°/i;
+    if (has(t,re)) return { kind:"covered", quote:lineOf(t,re) };
+    var north = lineOf(t,/крайнего севера|северн[а-яё]+ исполнени|суров[а-яё]+ услови/i);
+    if (north) return { kind:"conflict", quote:north,
+      what:"Условия эксплуатации описаны словесно, без диапазона рабочих температур — требование неизмеримо." };
+    return { kind:"missing", what:"Диапазон рабочих температур окружающего воздуха не указан." };
+  },
+  uhl:function(t){
+    if (has(t,/УХЛ\s?[1-5]/i)) return { kind:"covered", quote:lineOf(t,/УХЛ\s?[1-5]/i) };
+    if (has(t,/климатическ[а-яё]+ исполнени[а-яё]*/i))
+      return { kind:"missing", what:"Климатическое исполнение упомянуто, но условное обозначение по ГОСТ 15150-69 не приведено." };
+    return { kind:"missing", what:"Климатическое исполнение и категория размещения не указаны." };
+  },
+  ip:function(t){
+    var re = /\bIP\s?\d{2}\b/i;
+    if (has(t,re)) return { kind:"covered", quote:lineOf(t,re) };
+    return { kind:"missing", what:"Степень защиты оболочки (код IP) не указана." };
+  },
+  ex:function(t){
+    var zone = lineOf(t,/взрывоопасн[а-яё]+\s+зон[а-яё]*|зона\s+класса\s*\d/i);
+    if (has(t,/\bEx\s+[a-z]{1,2}\b|взрывозащит[а-яё]+|взрывобезопасн[а-яё]+/i))
+      return { kind:"covered", quote:lineOf(t,/\bEx\s+[a-z]{1,2}\b|взрывозащит[а-яё]+/i) };
+    if (zone) return { kind:"conflict", quote:zone,
+      what:"Оборудование размещается во взрывоопасной зоне, но требования к взрывозащите в задании отсутствуют." };
+    return { kind:"missing", what:"Требования к взрывозащите не указаны, зона размещения не классифицирована." };
+  },
+  life:function(t){
+    var s1 = has(t,/срок\s+службы[^.\n]*\d+/i);
+    var s2 = has(t,/межремонтн[а-яё]+[^.\n]*\d+|наработк[а-яё]*[^.\n]*\d+/i);
+    if (s1 && s2) return { kind:"covered", quote:lineOf(t,/срок\s+службы/i) };
+    if (s1 || s2) return { kind:"missing",
+      what: s1 ? "Указан срок службы, но не задан межремонтный период."
+               : "Указан межремонтный период, но не задан срок службы." };
+    return { kind:"missing", what:"Срок службы и межремонтный период не указаны." };
+  },
+  kit:function(t){
+    var k = has(t,/комплект[а-яё]*/i);
+    var d = has(t,/руководств[а-яё]+|паспорт|эксплуатационн[а-яё]+ документаци/i);
+    var r = has(t,/русск[а-яё]+ язык/i);
+    if (k && d && r) return { kind:"covered", quote:lineOf(t,/русск[а-яё]+ язык/i) };
+    if (k && !d) return { kind:"missing", quote:lineOf(t,/комплект[а-яё]*/i),
+      what:"В комплектности поставки не предусмотрена эксплуатационная документация." };
+    if (k && d && !r) return { kind:"missing", quote:lineOf(t,/руководств[а-яё]+|паспорт/i),
+      what:"Не указано, что документация предоставляется на русском языке." };
+    return { kind:"missing", what:"Комплектность поставки не определена." };
+  },
+  warr:function(t){
+    var term = has(t,/гарантийн[а-яё]+ срок[^.\n]*\d+|гарант[а-яё]*[^.\n]*\d+\s*(месяц|год|лет)/i);
+    var rf = has(t,/российской федерации|территории\s+РФ|\sРФ[\s.,]/i);
+    if (term && rf) return { kind:"covered", quote:lineOf(t,/гарантийн[а-яё]+ срок|гарант[а-яё]*[^.\n]*\d+/i) };
+    var any = lineOf(t,/гарант[а-яё]+/i);
+    if (any && !term) return { kind:"conflict", quote:any,
+      what:"Гарантия упомянута без указания срока — обязательство не имеет измеримой границы." };
+    if (term && !rf) return { kind:"missing", quote:lineOf(t,/гарантийн[а-яё]+ срок/i),
+      what:"Не определён порядок сервисного обслуживания на территории Российской Федерации." };
+    return { kind:"missing", what:"Гарантийный срок и сервисное обслуживание не указаны." };
+  }
+};
+
+function refsCheck(text){
+  var out = [], seen = {};
+  var re = /(ГОСТ\s?Р?|СНиП|СП|СТО|ТУ)\s?\d{1,5}[.\-][\d\-.]*\d(?:\s?-\s?\d{2,4})?/g, m;
+  while ((m = re.exec(text)) !== null){
+    var doc = m[0].trim(), key = doc.toLowerCase();
+    if (seen[key]) continue;
+    seen[key] = 1;
+    var y = doc.match(/(\d{4})\s*$/);
+    var y2 = doc.match(/-(\d{2})\s*$/);
+    var full = y ? +y[1] : (y2 ? 1900 + +y2[1] : null);
+    var old = full && (new Date().getFullYear() - full) >= 10;
+    out.push({
+      kind:"outdated",
+      what: old
+        ? "Ссылка на редакцию " + full + " года: прошло более десяти лет, требуется проверка актуальности."
+        : "Ссылка на нормативный документ: проверьте актуальность редакции на дату выпуска задания.",
+      ref: doc,
+      fix:"Сверить редакцию с действующим перечнем нормативной документации.",
+      quote: lineOf(text, new RegExp(doc.replace(/[.*+?^${}()|[\]\\]/g,"\\$&"),"i"))
+    });
+  }
+  return out;
+}
+
+function analyze(text){
+  var res = [];
+  REQS.forEach(function(r){
+    var v = CHECKS[r.id](text);
+    if (v.multi){
+      v.multi.forEach(function(h){
+        res.push({ kind:"vague", ref:r.src, reqId:r.id,
+          what:"Неизмеримая формулировка: " + h.why + ".", fix:r.fix, quote:h.line });
+      });
+      return;
+    }
+    res.push({
+      kind:v.kind, ref:r.src, reqId:r.id,
+      what: v.what || "Требование отражено в задании.",
+      fix: v.kind === "covered" ? "" : r.fix,
+      quote: v.quote || ""
+    });
+  });
+  return res.concat(refsCheck(text));
+}
+
+var DEMO_BAD = 'ТЕХНИЧЕСКОЕ ЗАДАНИЕ\nна поставку насосного агрегата для площадки подготовки газа\n\n1. Общие сведения\n1.1. Заказчик: Общество.\n1.2. Назначение: перекачивание технологической жидкости на площадке подготовки газа.\n\n2. Технические требования\n2.1. Производительность агрегата — не менее 40 м3/ч.\n2.2. Напор — не менее 60 м.\n2.3. Оборудование размещается на открытой площадке во взрывоопасной зоне класса 1.\n2.4. Степень защиты оболочки электродвигателя — не ниже IP54.\n2.5. Оборудование должно быть рассчитано на эксплуатацию в условиях Крайнего Севера.\n2.6. Агрегат должен обеспечивать надёжную и длительную работу при любых погодных условиях.\n2.7. Материал проточной части — коррозионностойкая сталь.\n2.8. Уровень шума — в пределах действующих санитарных норм.\n\n3. Комплектность\n3.1. В комплект поставки входят: насосный агрегат, электродвигатель, рама, муфта с ограждением.\n\n4. Гарантии\n4.1. Поставщик предоставляет гарантию на поставляемое оборудование.\n\n5. Прочие условия\n5.1. Оборудование должно соответствовать ГОСТ 6134-2007 в части методов испытаний.\n5.2. Монтаж и пусконаладочные работы выполняются силами Заказчика.';
+
+var DEMO_GOOD = 'ТЕХНИЧЕСКОЕ ЗАДАНИЕ\nна поставку насосного агрегата для установки подготовки газа, площадка № 3\n\n1. Общие сведения\n1.1. Заказчик: Общество.\n1.2. Объект: установка подготовки газа, площадка № 3.\n1.3. Стадия проектирования: рабочая документация.\n1.4. Назначение: перекачивание технологической жидкости.\n\n2. Условия эксплуатации\n2.1. Размещение — открытая площадка.\n2.2. Диапазон рабочих температур окружающего воздуха: от минус 45 до плюс 40 °C.\n2.3. Климатическое исполнение и категория размещения — УХЛ1 по ГОСТ 15150-69.\n2.4. Степень защиты оболочки электродвигателя — не ниже IP65 по ГОСТ 14254-2015.\n\n3. Требования промышленной безопасности\n3.1. Зона размещения — взрывоопасная зона класса 1.\n3.2. Уровень взрывозащиты электрооборудования — Ex d IIB T4 Gb.\n3.3. Назначенный срок службы — не менее 20 лет.\n3.4. Межремонтный период — не менее 8000 часов наработки.\n\n4. Технические требования\n4.1. Производительность — не менее 40 м3/ч при напоре не менее 60 м.\n4.2. Материал проточной части — сталь 12Х18Н10Т.\n4.3. Уровень звука на расстоянии 1 м — не более 80 дБА.\n\n5. Комплектность поставки\n5.1. Насосный агрегат, электродвигатель, рама, муфта с ограждением.\n5.2. Паспорт и руководство по эксплуатации на русском языке.\n5.3. Ведомость запасных частей на двухлетний период эксплуатации.\n\n6. Гарантии и сервис\n6.1. Гарантийный срок — 24 месяца с даты ввода в эксплуатацию.\n6.2. Сервисное обслуживание осуществляется на территории Российской Федерации.';
+
+var KINDS = {
+  missing:{ l:"Требование не отражено", s:"crit", sl:"Критично" },
+  conflict:{ l:"Противоречие", s:"crit", sl:"Критично" },
+  vague:{ l:"Неоднозначная формулировка", s:"major", sl:"Существенно" },
+  outdated:{ l:"Проверить актуальность", s:"minor", sl:"Замечание" },
+  covered:{ l:"Требование учтено", s:"ok", sl:"Учтено" }
+};
+var ORD = { crit:0, major:1, minor:2, ok:3 };
+
+var text = "", findings = [], filter = "all", mode = "bad";
+function $(id){ return document.getElementById(id); }
+function esc(s){ return (s||"").replace(/[&<>"]/g, function(c){
+  return ({ "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;" })[c]; }); }
+function sev(f){ return (KINDS[f.kind]||{}).s; }
+
+function run(src){
+  text = src;
+  var t0 = performance.now();
+  findings = analyze(text).sort(function(a,b){ return (ORD[sev(a)]??9) - (ORD[sev(b)]??9); });
+  var ms = performance.now() - t0;
+
+  var coveredReq = findings.filter(function(f){ return f.kind === "covered" && f.reqId; }).length;
+  var crit = findings.filter(function(f){ return sev(f) === "crit"; }).length;
+  var cov = findings.filter(function(f){ return f.kind === "covered"; }).length;
+  var pct = Math.round(coveredReq / REQS.length * 100);
+
+  $("sPct").textContent = pct + "%";
+  $("sBar").style.width = Math.min(100, pct) + "%";
+  $("sCrit").textContent = crit;
+  $("sAll").textContent = findings.length - cov;
+  $("sTime").textContent = ms < 1000 ? Math.max(1, Math.round(ms)) + " мс" : (ms/1000).toFixed(1) + " с";
+
+  filter = "all";
+  renderFilters(); renderFinds(); paint(null); renderBase();
+}
+
+function renderFilters(){
+  var c = { all:findings.length };
+  ["crit","major","minor","ok"].forEach(function(k){
+    c[k] = findings.filter(function(f){ return sev(f) === k; }).length;
+  });
+  var defs = [["all","Все"],["crit","Критичные"],["major","Существенные"],["minor","Замечания"],["ok","Учтённые"]];
+  $("filters").innerHTML = defs.filter(function(d){ return c[d[0]] > 0; }).map(function(d){
+    return '<button class="chip" data-f="' + d[0] + '" aria-pressed="' + (filter === d[0]) + '">'
+      + d[1] + " · " + c[d[0]] + "</button>";
+  }).join("");
+  Array.prototype.forEach.call($("filters").querySelectorAll(".chip"), function(b){
+    b.addEventListener("click", function(){
+      filter = b.dataset.f;
+      Array.prototype.forEach.call($("filters").querySelectorAll(".chip"), function(x){
+        x.setAttribute("aria-pressed", x.dataset.f === filter);
+      });
+      renderFinds();
+    });
+  });
+}
+
+function renderFinds(){
+  var show = findings.filter(function(f){ return filter === "all" || sev(f) === filter; });
+  if (!show.length){ $("finds").innerHTML = '<p class="note">В этой категории замечаний нет.</p>'; return; }
+  $("finds").innerHTML = show.map(function(f, i){
+    var k = KINDS[f.kind] || { l:"Замечание", s:"", sl:"" };
+    var tap = f.quote && text.indexOf(f.quote) >= 0;
+    var tag = tap ? "button" : "div";
+    return "<" + tag + ' class="find ' + k.s + '" data-i="' + i + '"' + (tap ? ' type="button"' : "") + ">"
+      + '<span class="line1"><span class="sev">' + k.sl + '</span><span class="kind">' + k.l + "</span></span>"
+      + '<span class="what">' + esc(f.what) + "</span>"
+      + (f.fix ? '<span class="fix">Как устранить: ' + esc(f.fix) + "</span>" : "")
+      + (f.ref ? '<span class="ref">' + esc(f.ref) + "</span>" : "")
+      + (f.quote ? '<span class="quote">' + esc(f.quote) + "</span>" : "")
+      + (tap ? '<span class="tap">Нажмите, чтобы увидеть в тексте задания</span>' : "")
+      + "</" + tag + ">";
+  }).join("");
+  Array.prototype.forEach.call($("finds").querySelectorAll("button.find"), function(el){
+    el.addEventListener("click", function(){
+      var f = show[+el.dataset.i];
+      tab("D"); paint(f.quote);
+    });
+  });
+}
+
+function paint(active){
+  var marks = [];
+  findings.forEach(function(f){
+    if (!f.quote) return;
+    var at = text.indexOf(f.quote);
+    if (at < 0 || sev(f) === "ok") return;
+    marks.push({ at:at, q:f.quote, s:sev(f) });
+  });
+  marks.sort(function(a,b){ return a.at - b.at || b.q.length - a.q.length; });
+  var out = "", cur = 0;
+  marks.forEach(function(m){
+    if (m.at < cur) return;
+    var cls = m.s === "crit" ? "crit" : (m.s === "minor" ? "minor" : "");
+    if (m.q === active) cls = (cls + " on").trim();
+    out += esc(text.slice(cur, m.at)) + '<mark class="' + cls + '">' + esc(m.q) + "</mark>";
+    cur = m.at + m.q.length;
+  });
+  out += esc(text.slice(cur));
+  $("docBox").innerHTML = out;
+  if (active){
+    var el = $("docBox").querySelector("mark.on");
+    if (el) el.scrollIntoView({ block:"center", behavior:"smooth" });
+  }
+}
+
+function renderBase(){
+  var st = {};
+  findings.forEach(function(f){
+    if (!f.reqId) return;
+    var s = sev(f);
+    if (st[f.reqId] === undefined || ORD[s] < ORD[st[f.reqId]]) st[f.reqId] = s;
+  });
+  var gs = [];
+  REQS.forEach(function(r){
+    var g = gs.filter(function(x){ return x.n === r.g; })[0];
+    if (!g){ g = { n:r.g, items:[] }; gs.push(g); }
+    g.items.push(r);
+  });
+  $("groups").innerHTML = gs.map(function(g, gi){
+    return '<div class="grp" data-open="' + (gi === 0) + '">'
+      + '<button type="button" aria-expanded="' + (gi === 0) + '">'
+      + '<span class="nm">' + esc(g.n) + "</span>"
+      + '<span class="ct">' + g.items.length + "</span></button>"
+      + '<div class="items"' + (gi === 0 ? "" : " hidden") + ">"
+      + g.items.map(function(r){
+          return '<div class="req s-' + (st[r.id] || "") + '">'
+            + '<span class="dot"></span><span><span class="src">' + esc(r.src) + "</span>"
+            + '<span class="tx">' + esc(r.txt) + "</span></span></div>";
+        }).join("")
+      + "</div></div>";
+  }).join("");
+  Array.prototype.forEach.call($("groups").querySelectorAll(".grp > button"), function(b){
+    b.addEventListener("click", function(){
+      var items = b.nextElementSibling;
+      var open = items.hidden;
+      items.hidden = !open;
+      b.setAttribute("aria-expanded", open);
+    });
+  });
+}
+
+function tab(which){
+  [["F","pF"],["D","pD"],["B","pB"]].forEach(function(p){
+    var on = p[0] === which;
+    $("tab" + p[0]).setAttribute("aria-selected", on);
+    $(p[1]).hidden = !on;
+  });
+}
+["F","D","B"].forEach(function(w){ $("tab" + w).addEventListener("click", function(){ tab(w); }); });
+
+function setMode(m){
+  mode = m;
+  [["bad","bBad"],["good","bGood"],["own","bOwn"]].forEach(function(p){
+    $(p[1]).setAttribute("aria-pressed", p[0] === m);
+  });
+  var own = m === "own";
+  $("docEdit").hidden = !own;
+  $("runBtn").hidden = !own;
+  $("docBox").hidden = own;
+  $("legend").hidden = own;
+  if (own){
+    tab("D");
+    $("docEdit").focus();
+  } else {
+    run(m === "bad" ? DEMO_BAD : DEMO_GOOD);
+    tab("F");
+    window.scrollTo({ top:0, behavior:"smooth" });
+  }
+}
+$("bBad").addEventListener("click", function(){ setMode("bad"); });
+$("bGood").addEventListener("click", function(){ setMode("good"); });
+$("bOwn").addEventListener("click", function(){ setMode("own"); });
+$("runBtn").addEventListener("click", function(){
+  var v = $("docEdit").value.trim();
+  if (!v){ $("docEdit").focus(); return; }
+  $("docEdit").hidden = true; $("runBtn").hidden = true;
+  $("docBox").hidden = false; $("legend").hidden = false;
+  run(v); tab("F"); window.scrollTo({ top:0, behavior:"smooth" });
+});
+
+run(DEMO_BAD);
+</script>
